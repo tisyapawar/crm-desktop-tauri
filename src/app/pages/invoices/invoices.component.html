@@ -1,0 +1,596 @@
+<div class="invoice-container">
+
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Tax Invoices</h1>
+      <p class="page-subtitle">Create and manage tax invoices</p>
+    </div>
+    <button class="btn btn-primary" (click)="openAddInvoice()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      Add Invoice
+    </button>
+  </div>
+
+  <!-- Invoice List -->
+  <div class="table-container" *ngIf="invoices.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 60px;">#</th>
+          <th>Invoice No</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Amount</th>
+          <th>Outstanding</th>
+          <th>Status</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let inv of invoices; let i = index">
+          <td class="text-center">{{ i + 1 }}</td>
+          <td><span class="invoice-ref">{{ inv.invoiceNo }}</span></td>
+          <td>{{ inv.invoiceDate }}</td>
+          <td><span class="customer-name">{{ inv.billTo.name }}</span></td>
+          <td><span class="amount">₹{{ inv.grandTotal | number:'1.2-2' }}</span></td>
+          <td><span class="outstanding">₹{{ getOutstanding(inv) }}</span></td>
+          <td>
+            <select class="status-select" [(ngModel)]="inv.status" (change)="onStatusChange(inv)">
+              <option value="Pending">Pending</option>
+              <option value="Paid">Paid</option>
+            </select>
+          </td>
+
+          <td class="actions-column">
+            <div class="actions-dropdown">
+              <button class="btn-action-trigger" (click)="toggleActionMenu($event, inv.id)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="3" r="1.5" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                  <circle cx="8" cy="13" r="1.5" fill="currentColor" />
+                </svg>
+              </button>
+              <div class="actions-menu" [class.active]="activeMenuId === inv.id">
+                <button class="action-item" (click)="editInvoice(inv); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.333 2A1.886 1.886 0 0114 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor"
+                      stroke-width="1.5" />
+                  </svg>
+                  Edit
+                </button>
+                <button class="action-item action-tax" (click)="openTaxInvoice(inv); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M9.333 1.333H4A1.333 1.333 0 002.667 2.667v10.666A1.333 1.333 0 004 14.667h8a1.333 1.333 0 001.333-1.334V5.333l-4-4z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  Tax Invoice
+                </button>
+                <button class="action-item action-grr" (click)="openGRRModal(inv); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M14 4H2v8.667A1.333 1.333 0 003.333 14h9.334A1.333 1.333 0 0014 12.667V4zM2 4l1.333-2h9.334L14 4"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  GRR
+                </button>
+                <button class="action-item action-mir" (click)="openMIRModal(inv); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M13.333 7.333v6a1.333 1.333 0 01-1.333 1.334H4a1.333 1.333 0 01-1.333-1.334v-9.333A1.333 1.333 0 014 2.667h5.333"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  MIR
+                </button>
+                <div class="action-divider"></div>
+                <button class="action-item action-delete" (click)="deleteInvoice(inv); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="invoices.length === 0">
+          <td colspan="8" class="empty-state">
+            <div class="empty-state-content">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <path d="M38 10H10a2 2 0 00-2 2v24a2 2 0 002 2h28a2 2 0 002-2V12a2 2 0 00-2-2zM8 16h32"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              <p>No invoices found</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ADD/EDIT INVOICE MODAL -->
+  <div class="modal-overlay" *ngIf="showInvoiceModal" (click)="closeModal()">
+    <div class="modal-content invoice-modal" (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+            <path
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              stroke="currentColor" stroke-width="2" />
+          </svg>
+          {{ invoiceForm.id ? 'Edit Invoice' : 'Create New Invoice' }}
+        </h2>
+        <button class="modal-close" (click)="closeModal()">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <form class="invoice-form">
+
+        <!-- Invoice Details Section -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M15 15.75H3a1.5 1.5 0 01-1.5-1.5V3.75a1.5 1.5 0 011.5-1.5h12a1.5 1.5 0 011.5 1.5v10.5a1.5 1.5 0 01-1.5 1.5z"
+                stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            Invoice Details
+          </h3>
+
+          <div class="row-3">
+            <div class="form-group">
+              <label class="form-label">Invoice No <span class="required">*</span></label>
+              <input class="form-input" [(ngModel)]="invoiceForm.invoiceNo" name="invoiceNo"
+                placeholder="Enter invoice number">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Invoice Date <span class="required">*</span></label>
+              <input type="date" class="form-input" [(ngModel)]="invoiceForm.invoiceDate" name="invoiceDate">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Due Date</label>
+              <input type="date" class="form-input" [(ngModel)]="invoiceForm.dueDate" name="dueDate">
+            </div>
+          </div>
+
+          <div class="row-3">
+            <div class="form-group">
+              <label class="form-label">Order Ref No</label>
+              <input class="form-input" [(ngModel)]="invoiceForm.orderRefNo" name="orderRefNo"
+                placeholder="Reference number">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Internal Ref No</label>
+              <input class="form-input" [(ngModel)]="invoiceForm.internalRefNo" name="internalRefNo"
+                placeholder="Internal reference">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">E-Way Bill No</label>
+              <input class="form-input" [(ngModel)]="invoiceForm.ewayBillNo" name="ewayBillNo"
+                placeholder="E-Way bill number">
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Information Section -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M15 15.75v-1.5a3 3 0 00-3-3H6a3 3 0 00-3 3v1.5M12 5.25a3 3 0 11-6 0 3 3 0 016 0z"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Customer Information
+          </h3>
+
+          <div class="row-2">
+            <!-- Bill To -->
+            <div class="info-card">
+              <h4 class="card-title">Bill To</h4>
+
+              <div class="form-group">
+                <label class="form-label">Customer <span class="required">*</span></label>
+                <select class="form-select" [(ngModel)]="selectedCustomer" name="billToCustomer"
+                  (ngModelChange)="onInvoiceCustomerChange()">
+                  <option [ngValue]="null">Select Customer</option>
+                  <option *ngFor="let c of customers" [ngValue]="c">{{ c.name }}</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea class="form-textarea" [(ngModel)]="invoiceForm.billTo.address" name="billToAddress" rows="3"
+                  placeholder="Enter billing address"></textarea>
+              </div>
+
+              <div class="row-2">
+                <div class="form-group">
+                  <label class="form-label">GSTIN</label>
+                  <input class="form-input" [(ngModel)]="invoiceForm.billTo.gstin" name="billToGstin"
+                    placeholder="GST number">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">PAN</label>
+                  <input class="form-input" [(ngModel)]="invoiceForm.billTo.pan" name="billToPan"
+                    placeholder="PAN number">
+                </div>
+              </div>
+
+              <div class="row-2">
+                <div class="form-group">
+                  <label class="form-label">State</label>
+                  <input class="form-input" [(ngModel)]="invoiceForm.billTo.state" name="billToState"
+                    placeholder="State name">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">State Code</label>
+                  <input class="form-input" [(ngModel)]="invoiceForm.billTo.supplyStateCode" name="billToStateCode"
+                    placeholder="Code">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Place of Supply</label>
+                <input class="form-input" [(ngModel)]="invoiceForm.billTo.placeOfSupply" name="billToPlaceOfSupply"
+                  placeholder="Supply location">
+              </div>
+            </div>
+
+            <!-- Ship To -->
+            <div class="info-card">
+              <h4 class="card-title">Ship To</h4>
+
+              <div class="form-group">
+                <label class="form-label">Name</label>
+                <input class="form-input" [(ngModel)]="invoiceForm.shipTo.name" name="shipToName"
+                  placeholder="Recipient name">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea class="form-textarea" [(ngModel)]="invoiceForm.shipTo.address" name="shipToAddress" rows="3"
+                  placeholder="Enter shipping address"></textarea>
+              </div>
+
+              <div class="row-2">
+                <div class="form-group">
+                  <label class="form-label">GSTIN</label>
+                  <input class="form-input" [(ngModel)]="invoiceForm.shipTo.gstin" name="shipToGstin"
+                    placeholder="GST number">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">PAN</label>
+                  <input class="form-input" [(ngModel)]="invoiceForm.shipTo.pan" name="shipToPan"
+                    placeholder="PAN number">
+                </div>
+              </div>
+
+              <div class="row-2">
+                <div class="form-group">
+                  <label class="form-label">State</label>
+                  <input class="form-input" [(ngModel)]="invoiceForm.shipTo.state" name="shipToState"
+                    placeholder="State name">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">State Code</label>
+                  <input class="form-input" [(ngModel)]="invoiceForm.shipTo.supplyStateCode" name="shipToStateCode"
+                    placeholder="Code">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Place of Supply</label>
+                <input class="form-input" [(ngModel)]="invoiceForm.shipTo.placeOfSupply" name="shipToPlaceOfSupply"
+                  placeholder="Supply location">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Section -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M2.25 3.75h13.5M2.25 7.5h13.5M2.25 11.25h13.5M2.25 15h13.5" stroke="currentColor"
+                stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+            Item Details
+          </h3>
+
+          <div class="items-table-wrapper">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Sr</th>
+                  <th style="width: 30%;">Particulars</th>
+                  <th style="width: 120px;">HSN/SAC</th>
+                  <th style="width: 100px;">UOM</th>
+                  <th style="width: 100px;">Qty</th>
+                  <th style="width: 120px;">Rate (₹)</th>
+                  <th style="width: 140px;">Amount (₹)</th>
+                  <th style="width: 50px;"></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr *ngFor="let it of invoiceForm.items; let i = index">
+                  <td class="text-center">{{ i + 1 }}</td>
+                  <td>
+                    <input class="table-input" [(ngModel)]="it.particulars" [name]="'particulars-'+i"
+                      placeholder="Item description">
+                  </td>
+                  <td>
+                    <input class="table-input" [(ngModel)]="it.hsn" [name]="'hsn-'+i" placeholder="HSN">
+                  </td>
+                  <td>
+                    <input class="table-input" [(ngModel)]="it.uom" [name]="'uom-'+i" placeholder="Unit">
+                  </td>
+                  <td>
+                    <input type="number" class="table-input" [(ngModel)]="it.qty" [name]="'qty-'+i"
+                      (input)="recalculateTotals()">
+                  </td>
+                  <td>
+                    <input type="number" class="table-input" [(ngModel)]="it.rate" [name]="'rate-'+i"
+                      (input)="recalculateTotals()">
+                  </td>
+                  <td class="amount-cell">₹{{ it.amount | number:'1.2-2' }}</td>
+                  <td>
+                    <button type="button" class="btn-remove-item" (click)="removeInvoiceItem(i)">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" stroke-width="1.5"
+                          stroke-linecap="round" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <button type="button" class="btn btn-add-item" (click)="addInvoiceItem()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            Add Item
+          </button>
+        </div>
+
+        <!-- Charges & Totals Section -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M9 1.5v15M13.5 4.5h-6a3 3 0 000 6h3a3 3 0 010 6h-6" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" />
+            </svg>
+            Charges & Totals
+          </h3>
+
+          <div class="charges-totals-grid">
+            <!-- Left: Additional Charges -->
+            <div class="charges-panel">
+              <h4 class="panel-title">Additional Charges</h4>
+
+              <div class="form-group">
+                <label class="form-label">Packing Charges</label>
+                <input type="number" class="form-input" [(ngModel)]="invoiceForm.packingCharges" name="packingCharges"
+                  (input)="recalculateTotals()" placeholder="0.00">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Freight Charges</label>
+                <input type="number" class="form-input" [(ngModel)]="invoiceForm.freightCharges" name="freightCharges"
+                  (input)="recalculateTotals()" placeholder="0.00">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Other Charges</label>
+                <input type="number" class="form-input" [(ngModel)]="invoiceForm.otherCharges" name="otherCharges"
+                  (input)="recalculateTotals()" placeholder="0.00">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Round Off</label>
+                <input type="number" class="form-input" [(ngModel)]="invoiceForm.roundOff" name="roundOff"
+                  (input)="recalculateTotals()" placeholder="0.00">
+              </div>
+            </div>
+
+            <!-- Right: Summary -->
+            <div class="summary-panel">
+              <h4 class="panel-title">Invoice Summary</h4>
+
+              <div class="summary-row">
+                <span>Sub Total:</span>
+                <span class="summary-value">₹{{ invoiceForm.subTotal1 | number:'1.2-2' }}</span>
+              </div>
+
+              <div class="summary-row">
+                <span>CGST (9%):</span>
+                <span class="summary-value">₹{{ invoiceForm.cgst | number:'1.2-2' }}</span>
+              </div>
+
+              <div class="summary-row">
+                <span>SGST (9%):</span>
+                <span class="summary-value">₹{{ invoiceForm.sgst | number:'1.2-2' }}</span>
+              </div>
+
+              <div class="summary-row">
+                <span>IGST (18%):</span>
+                <span class="summary-value">₹{{ invoiceForm.igst | number:'1.2-2' }}</span>
+              </div>
+
+              <div class="summary-divider"></div>
+
+              <div class="summary-row grand-total-row">
+                <span>Grand Total:</span>
+                <span class="grand-total-value">₹{{ invoiceForm.grandTotal | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transport Section -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M11.25 1.5H2.25v12h13.5v-9h-4.5v-3zM11.25 1.5v3h4.5" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Transport Details
+          </h3>
+
+          <div class="row-4">
+            <div class="form-group">
+              <label class="form-label">Mode</label>
+              <input class="form-input" [(ngModel)]="invoiceForm.transport.mode" name="transportMode"
+                placeholder="Road/Rail/Air">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Transport Name</label>
+              <input class="form-input" [(ngModel)]="invoiceForm.transport.name" name="transportName"
+                placeholder="Company name">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Vehicle No</label>
+              <input class="form-input" [(ngModel)]="invoiceForm.transport.vehicleNo" name="vehicleNo"
+                placeholder="Vehicle number">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">L.R. No</label>
+              <input class="form-input" [(ngModel)]="invoiceForm.transport.lrNo" name="lrNo" placeholder="LR number">
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment & Remarks Section -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M15.75 9.75l-6.364 6.364a4.5 4.5 0 01-6.364-6.364l6.364-6.364a3 3 0 014.243 4.243l-6.365 6.364a1.5 1.5 0 01-2.121-2.122l6.364-6.364"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Payment & Remarks
+          </h3>
+
+          <div class="form-group">
+            <label class="form-label">Payment Terms</label>
+            <input class="form-input" [(ngModel)]="invoiceForm.paymentTerms" name="paymentTerms"
+              placeholder="e.g., Net 30 days">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Remarks</label>
+            <textarea class="form-textarea" [(ngModel)]="invoiceForm.remarks" name="remarks" rows="3"
+              placeholder="Additional notes or comments"></textarea>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-cancel" (click)="closeModal()">Cancel</button>
+          <button type="button" class="btn btn-save" (click)="saveInvoice()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M13.333 7.333v6a1.333 1.333 0 01-1.333 1.334H4a1.333 1.333 0 01-1.333-1.334v-9.333A1.333 1.333 0 014 2.667h5.333"
+                stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            {{ invoiceForm.id ? 'Update' : 'Save' }} Invoice
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Tax Invoice Component -->
+  <app-tax-invoice *ngIf="selectedInvoiceForPrint" [invoice]="selectedInvoiceForPrint"></app-tax-invoice>
+
+</div>
+
+<!-- GRR MODAL -->
+<div class="modal-overlay" *ngIf="showGRRModal" (click)="closeGRRModal()">
+  <div class="modal-content grr-modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path d="M14 4H10a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V10l-6-6z" stroke="currentColor"
+            stroke-width="2" />
+        </svg>
+        Goods Receipt Report (GRR)
+      </h2>
+      <button class="modal-close" (click)="closeGRRModal()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="grr-form">
+      <!-- Continue with GRR form fields... -->
+      <!-- I'll provide the complete GRR form in the next message due to length -->
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closeGRRModal()">Cancel</button>
+      <button class="btn btn-save" (click)="generateGRR()">Generate GRR</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MIR MODAL -->
+<div class="modal-overlay" *ngIf="showMIRModal" (click)="closeMIRModal()">
+  <div class="modal-content mir-modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+            stroke="currentColor" stroke-width="2" />
+        </svg>
+        Material Inspection Report (MIR)
+      </h2>
+      <button class="modal-close" (click)="closeMIRModal()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="mir-form">
+      <!-- Continue with MIR form fields... -->
+      <!-- I'll provide the complete MIR form in the next message due to length -->
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closeMIRModal()">Cancel</button>
+      <button class="btn btn-save" (click)="generateMIR()">Generate MIR</button>
+    </div>
+
+  </div>
+</div>

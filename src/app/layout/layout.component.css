@@ -1,0 +1,118 @@
+.layout-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 10dvw;
+  background-color: #f5f5f5;
+  padding: 20px;
+  flex-shrink: 0;
+  box-shadow: 1px 0 5px rgba(0, 0, 0, 0.1);
+  font-size: 35px;
+  /* Increased font size */
+  font-family: 'Calibri', sans-serif;
+}
+
+.sidebar-title {
+  font-size: 40px;
+  /* Larger than nav links */
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+.sidebar-nav a {
+  display: block;
+  margin-bottom: 12px;
+  color: #333;
+  text-decoration: none;
+}
+
+.sidebar-nav a.active {
+  font-weight: bold;
+  color: #003366;
+}
+
+.sidebar a {
+  display: block;
+  padding: 10px 20px;
+  color: #003366;
+  text-decoration: none;
+  font-size: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar a:hover {
+  background-color: #f0f0f0;
+  /* light grey on hover */
+  color: #000;
+  /* optional: darker text on hover */
+}
+
+
+/* Top bar */
+.top-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f5f5f5;
+  padding: 10px 20px;
+  border-bottom: 1px solid #ddd;
+  height: 60px;
+}
+
+.navbar-center {
+  flex-grow: 1;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #003366;
+  /* navy blue for company name */
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.inventory-icon {
+  font-size: 1.5rem;
+  text-decoration: none;
+  color: #003366;
+  /* navy blue */
+  margin-left: auto;
+}
+
+.inventory-icon:hover {
+  color: #001a33;
+  /* darker navy blue on hover */
+  cursor: pointer;
+}
+
+
+
+/* Main content */
+.main-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 
+.main-content {
+  background-color: #fafafa;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+} */
+
+
+.main-content {
+  background-color: #fafafa;
+  flex: 1;
+  /* 🔥 let content decide height */
+  overflow-y: auto;
+  min-height: 0;
+  /* 🔑 prevents phantom space */
+}

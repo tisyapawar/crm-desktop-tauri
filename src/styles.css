@@ -1,0 +1,125 @@
+/* CRM Global Modal (same as Customers) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+/* Same modal box style as Customers */
+.order-modal {
+  background: white;
+  width: 60%;
+  max-width: 1100px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Section card (blue header bar + light background) */
+.section-card {
+  background: #f4f7fb;
+  padding: 18px;
+  border-radius: 10px;
+  border: 1px solid #dce3ee;
+  margin-bottom: 20px;
+}
+
+.section-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: #002244;
+  margin-bottom: 12px;
+  border-left: 5px solid #002244;
+  padding-left: 10px;
+}
+
+/* Grid rows like Customers page */
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+/* Inputs */
+.order-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Add/Delete item buttons */
+.small-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.add-btn { background: #001f54; color: white; }
+.add-btn:hover { background: #00337a; }
+
+.delete-btn { background: #c62828; color: white; }
+.delete-btn:hover { background: #a32020; }
+
+/* Save/Cancel buttons */
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+.save-btn {
+  background: #002244;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  font-weight: bold;
+}
+
+.cancel-btn {
+  background: #aaa;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  font-weight: bold;
+}
+
+.order-modal table input {
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  font-size: 14px !important;
+  box-sizing: border-box;
+}
+
+.order-modal table td, 
+.order-modal table th {
+  vertical-align: middle !important;
+}
+
+.order-modal table input.order-input {
+  width: 100% !important;
+}

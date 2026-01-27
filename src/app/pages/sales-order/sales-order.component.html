@@ -1,0 +1,485 @@
+<div class="sales-container">
+  <!-- Header Section -->
+  <div class="page-header" *ngIf="!showForm">
+    <div class="header-content">
+      <h1 class="page-title">Sales Orders Management</h1>
+      <p class="page-subtitle">Create and manage sales orders</p>
+    </div>
+    <button class="btn btn-primary" (click)="createNewSalesOrder()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      Create Sale
+    </button>
+  </div>
+
+  <!-- FORM VIEW -->
+  <div *ngIf="showForm" class="form-view">
+    <!-- Back Button -->
+    <button class="btn-back" (click)="goBackToList()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M15 10H5M5 10l5 5M5 10l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+      Back to List
+    </button>
+
+    <!-- Form Header -->
+    <div class="form-header">
+      <h2 class="form-title">Sales Order Details</h2>
+      <span class="order-number">{{ salesOrderNo }}</span>
+    </div>
+
+    <form (ngSubmit)="onSave()" class="sales-form">
+
+      <!-- Basic Details Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M15 15.75H3a1.5 1.5 0 01-1.5-1.5V3.75a1.5 1.5 0 011.5-1.5h12a1.5 1.5 0 011.5 1.5v10.5a1.5 1.5 0 01-1.5 1.5z"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Basic Details
+        </h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Sales Order No</label>
+            <input type="text" class="form-input readonly-field" [(ngModel)]="salesOrderNo" name="orderNo" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sales Order Date</label>
+            <input type="date" class="form-input" [(ngModel)]="salesOrderDate" name="salesOrderDate" />
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Customer Name</label>
+            <input type="text" class="form-input" [(ngModel)]="customerName" name="customerName" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Customer ID</label>
+            <input type="text" class="form-input" [(ngModel)]="customerId" name="customerId" />
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Billing Address</label>
+            <textarea class="form-textarea" rows="3" [(ngModel)]="billAddr" name="billAddr"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shipping Address</label>
+            <textarea class="form-textarea" rows="3" [(ngModel)]="shipAddr" name="shipAddr"></textarea>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">GST No</label>
+          <input type="text" class="form-input" [(ngModel)]="gstNo" name="gstNo" style="max-width: 400px;" />
+        </div>
+      </div>
+
+      <!-- Contact & Sales Details Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M15 15.75v-1.5a3 3 0 00-3-3H6a3 3 0 00-3 3v1.5M12 5.25a3 3 0 11-6 0 3 3 0 016 0z"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Contact & Sales Details
+        </h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Contact Person</label>
+            <input type="text" class="form-input" [(ngModel)]="contactPerson" name="contactPerson" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Number / Email</label>
+            <input type="text" class="form-input" [(ngModel)]="contactNo" name="contactNo" />
+          </div>
+        </div>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Payment Terms</label>
+            <select class="form-select" [(ngModel)]="paymentTerms" name="paymentTerms"
+              (ngModelChange)="onPaymentTermsChange($event)">
+              <option *ngFor="let p of pTerms" [value]="p.value">{{ p.name }}</option>
+            </select>
+          </div>
+          <div class="form-group" *ngIf="paymentTerms === 'Credit'">
+            <label class="form-label">Credit Days</label>
+            <input type="number" class="form-input" [(ngModel)]="creditDays" name="creditDays" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">PO Number</label>
+            <input type="text" class="form-input" [(ngModel)]="poNo" name="poNo" />
+          </div>
+        </div>
+
+        <div class="form-group" style="max-width: 400px;">
+          <label class="form-label">PO Date</label>
+          <input type="date" class="form-input" [(ngModel)]="poDate" name="poDate" />
+        </div>
+      </div>
+
+      <!-- Items Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M2.25 3.75h13.5M2.25 7.5h13.5M2.25 11.25h13.5M2.25 15h13.5" stroke="currentColor"
+              stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          Item / Product Details
+        </h3>
+
+        <div class="items-table-wrapper">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 200px;">Item</th>
+                <th style="width: 80px;">Qty</th>
+                <th style="width: 80px;">UoM</th>
+                <th style="width: 100px;">HSN</th>
+                <th style="width: 100px;">Rate (₹)</th>
+                <th style="width: 120px;">Discount</th>
+                <th style="width: 80px;">Tax %</th>
+                <th style="width: 120px;">Total (₹)</th>
+                <th style="width: 50px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let line of itemsShow; let i = index">
+                <td>
+                  <input type="text" class="table-input" [(ngModel)]="line.item" [name]="'item'+i" />
+                </td>
+                <td>
+                  <input type="number" class="table-input" [(ngModel)]="line.qty" [name]="'qty'+i"
+                    (input)="recalculateLine(line)" />
+                </td>
+                <td>
+                  <input type="text" class="table-input" [(ngModel)]="line.uom" [name]="'uom'+i" />
+                </td>
+                <td>
+                  <input type="text" class="table-input" [(ngModel)]="line.hsn" [name]="'hsn'+i" />
+                </td>
+                <td>
+                  <input type="number" class="table-input" [(ngModel)]="line.rate" [name]="'rate'+i"
+                    (input)="recalculateLine(line)" />
+                </td>
+                <td>
+                  <div class="discount-group">
+                    <input type="number" class="table-input" [(ngModel)]="line.disc" [name]="'disc'+i"
+                      (input)="recalculateLine(line)" />
+                    <select class="table-select" [(ngModel)]="line.discountType" [name]="'dtype'+i"
+                      (change)="recalculateLine(line)">
+                      <option>₹</option>
+                      <option>%</option>
+                    </select>
+                  </div>
+                </td>
+                <td>
+                  <input type="number" class="table-input" [(ngModel)]="line.gst" [name]="'gst'+i"
+                    (input)="recalculateLine(line)" />
+                </td>
+                <td class="amount-cell">₹{{ line.total | number:'1.2-2' }}</td>
+                <td>
+                  <button type="button" class="btn-remove-item" (click)="removeLine(i)">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="btn btn-add-item" (click)="addLine()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Add Item
+        </button>
+      </div>
+
+      <!-- Order Summary Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 1.5v15M13.5 4.5h-6a3 3 0 000 6h3a3 3 0 010 6h-6" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" />
+          </svg>
+          Order Summary
+        </h3>
+
+        <div class="summary-grid">
+          <div class="summary-item">
+            <label class="summary-label">Subtotal</label>
+            <input type="text" class="summary-input" [value]="getSubtotal() | number:'1.2-2'" readonly />
+          </div>
+          <div class="summary-item">
+            <label class="summary-label">Tax Total</label>
+            <input type="text" class="summary-input" [value]="getTaxTotal() | number:'1.2-2'" readonly />
+          </div>
+          <div class="summary-item">
+            <label class="summary-label">Freight</label>
+            <input type="number" class="summary-input editable" [(ngModel)]="freightCharges" name="freightCharges" />
+          </div>
+          <div class="summary-item grand">
+            <label class="summary-label">Grand Total</label>
+            <input type="text" class="summary-input" [value]="getGrandTotal() | number:'1.2-2'" readonly />
+          </div>
+        </div>
+      </div>
+
+      <!-- Delivery Information Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M11.25 1.5H2.25v12h13.5v-9h-4.5v-3zM11.25 1.5v3h4.5" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Delivery Information
+        </h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Expected Delivery Date</label>
+            <input type="date" class="form-input" [(ngModel)]="expectedDeliveryDate" name="expectedDeliveryDate" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Delivery Terms</label>
+            <select class="form-select" [(ngModel)]="deliveryTerms" name="deliveryTerms">
+              <option value="FOB">FOB</option>
+              <option value="Ex-Works">Ex-Works</option>
+              <option value="Door Delivery">Door Delivery</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Transporter Name</label>
+            <input type="text" class="form-input" [(ngModel)]="transporterName" name="transporterName" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mode of Transport</label>
+            <select class="form-select" [(ngModel)]="transportMode" name="transportMode">
+              <option value="Road">Road</option>
+              <option value="Air">Air</option>
+              <option value="Train">Train</option>
+              <option value="Sea">Sea</option>
+              <option value="Courier">Courier</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attachments Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M15.75 9.75l-6.364 6.364a4.5 4.5 0 01-6.364-6.364l6.364-6.364a3 3 0 014.243 4.243l-6.365 6.364a1.5 1.5 0 01-2.121-2.122l6.364-6.364"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Attachments
+        </h3>
+
+        <div class="file-upload-area">
+          <input #fileInput type="file" multiple (change)="onFilesSelected($event)" class="file-input-hidden" />
+
+          <button type="button" class="btn-upload" (click)="fileInput.click()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M6.667 13.333L10 10m0 0l3.333 3.333M10 10v7.5M16.667 13.9a4.167 4.167 0 00-2.5-7.567.417.417 0 01-.357-.208 5.833 5.833 0 10-9.233 7.083"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>Upload files or drag & drop here</span>
+          </button>
+
+          <button *ngIf="files.length" type="button" class="btn-clear-files" (click)="clearAllFiles()">
+            Clear All
+          </button>
+        </div>
+
+        <ul class="files-list" *ngIf="files.length">
+          <li *ngFor="let f of files; let i = index" class="file-item">
+            <div class="file-info">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M9.333 1.333H4A1.333 1.333 0 002.667 2.667v10.666A1.333 1.333 0 004 14.667h8a1.333 1.333 0 001.333-1.334V5.333l-4-4z"
+                  stroke="currentColor" stroke-width="1.5" />
+              </svg>
+              <span class="file-name" title="{{ f.name }}">{{ f.name }}</span>
+              <span class="file-size">{{ formatBytes(f.size) }}</span>
+            </div>
+            <button type="button" class="btn-remove-file" (click)="removeFile(i)">
+              Remove
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="downloadSalesOrderPDF()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M4.667 6.667L8 10m0 0l3.333-3.333M8 10V2"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Download PDF
+        </button>
+        <button type="button" class="btn btn-cancel" (click)="saveDraft()">
+          Save Draft
+        </button>
+        <button type="button" class="btn btn-save" (click)="submitOrder()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M13.333 7.333v6a1.333 1.333 0 01-1.333 1.334H4a1.333 1.333 0 01-1.333-1.334v-9.333A1.333 1.333 0 014 2.667h5.333"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Submit
+        </button>
+        <button *ngIf="salesOrderStatus === 'SUBMITTED'" type="button" class="btn btn-approve" (click)="approveOrder()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Approve
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div *ngIf="!showForm" class="list-view">
+
+    <!-- Draft Orders -->
+    <div class="orders-section" *ngIf="draftOrders.length">
+      <h3 class="section-title">Draft Sales Orders</h3>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order No</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Total</th>
+              <th class="actions-column-table">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of draftOrders">
+              <td><span class="order-ref">{{ o.orderNo }}</span></td>
+              <td>{{ o.orderDate }}</td>
+              <td><span class="customer-name">{{ o.customerName }}</span></td>
+              <td><span class="amount">₹{{ o.grandTotal | number:'1.2-2' }}</span></td>
+              <td class="actions-column-table">
+                <button class="btn-table btn-edit" (click)="editDraft(o)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M10 2a1.886 1.886 0 012.667 2.667L4 13.333.667 14 2 10.667 10.667 2z" stroke="currentColor"
+                      stroke-width="1.5" />
+                  </svg>
+                  Edit
+                </button>
+                <button class="btn-table btn-delete" (click)="deleteDraft(o)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path
+                      d="M1.75 3.5h10.5M4.667 3.5V2.333A1.167 1.167 0 015.833 1.167h2.334A1.167 1.167 0 019.333 2.333V3.5m1.75 0v8.167a1.167 1.167 0 01-1.166 1.166H4.083a1.167 1.167 0 01-1.166-1.166V3.5h8.166z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  Remove
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Submitted Orders -->
+    <div class="orders-section" *ngIf="submittedOrders.length">
+      <h3 class="section-title">Submitted Sales Orders</h3>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order No</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Total</th>
+              <th class="actions-column-table">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of submittedOrders">
+              <td><span class="order-ref">{{ o.orderNo }}</span></td>
+              <td>{{ o.orderDate }}</td>
+              <td><span class="customer-name">{{ o.customerName }}</span></td>
+              <td><span class="amount">₹{{ o.grandTotal | number:'1.2-2' }}</span></td>
+              <td class="actions-column-table">
+                <button class="btn-table btn-approve" (click)="approveFromTable(o)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  Approve
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Approved Orders -->
+    <div class="orders-section" *ngIf="approvedOrders.length">
+      <h3 class="section-title">Approved Sales Orders</h3>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order No</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th class="actions-column-table">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of approvedOrders">
+              <td><span class="order-ref">{{ o.orderNo }}</span></td>
+              <td>{{ o.orderDate }}</td>
+              <td><span class="customer-name">{{ o.customerName }}</span></td>
+              <td><span class="amount">₹{{ o.grandTotal | number:'1.2-2' }}</span></td>
+              <td>
+                <span class="badge badge-approved">APPROVED</span>
+              </td>
+              <td class="actions-column-table">
+                <button class="btn-table btn-download" (click)="downloadSalesOrderPDF(o)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path
+                      d="M12.25 8.75v2.333A1.167 1.167 0 0111.083 12.25H2.917A1.167 1.167 0 011.75 11.083V8.75M4.083 5.833L7 8.75m0 0l2.917-2.917M7 8.75V1.75"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  Download
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,195 @@
+.page-container {
+    width: 850px;
+    margin: 20px auto;
+}
+
+.invoice-page {
+    width: 850px;
+    border: 2px solid #000;
+    font-family: "Times New Roman", serif;
+    font-size: 13px;
+    color: #000;
+    padding: 6px;
+    box-sizing: border-box;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    /* 🔥 IMPORTANT */
+}
+
+td,
+th {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* ================= HEADER ================= */
+.header-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.header-table td {
+    border: 1px solid #000;
+    padding: 6px;
+}
+
+.inv-logo {
+    width: 90px;
+}
+
+.center {
+    text-align: center;
+}
+
+.right {
+    text-align: right;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+/* ================= COMPANY ================= */
+.company-block {
+    text-align: center;
+    margin: 6px 0 10px;
+}
+
+.company-name {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.company-addr {
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+/* ================= TABLES ================= */
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+
+.info-table td {
+    border: 1px solid #000;
+    padding: 6px;
+    vertical-align: top;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-top: 10px;
+}
+
+.items-table th,
+.items-table td {
+    border: 1px solid #000;
+    /* padding: 4px;
+    font-size: 12.5px; */
+    padding: 3px 4px;
+    font-size: 10px;
+}
+
+.items-table tbody tr {
+    height: 18px;
+    /* 🔥 FIXED ROW HEIGHT */
+}
+
+
+.items-table th:nth-child(1) {
+    width: 40px;
+}
+
+.items-table th:nth-child(2) {
+    width: 220px;
+}
+
+.items-table th:nth-child(3) {
+    width: 90px;
+}
+
+.items-table th:nth-child(4) {
+    width: 60px;
+}
+
+.items-table th:nth-child(5) {
+    width: 60px;
+}
+
+.items-table th:nth-child(6) {
+    width: 90px;
+}
+
+.items-table th:nth-child(7) {
+    width: 110px;
+}
+
+/* ================= COLORS ================= */
+.yellow-row th,
+.yellow-row td {
+    background: #ffff00;
+    font-weight: bold;
+}
+
+.yellow-box {
+    background: #ffff00;
+    padding: 4px;
+    margin-top: 6px;
+}
+
+/* ================= TOTAL ================= */
+.total-box {
+    margin-top: 6px;
+    text-align: right;
+}
+
+/* ================= FOOTER ================= */
+.amount-words {
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.footer {
+    margin-top: 12px;
+    font-size: 12px;
+}
+
+.page-container {
+    display: flex;
+    justify-content: center;
+}
+
+.invoice-page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    box-sizing: border-box;
+    font-size: 11px;
+    /* 🔥 KEY */
+    line-height: 1.25;
+    /* 🔥 KEY */
+    background: #fff;
+}
+
+.invoice-page {
+    width: 210mm;
+    height: 297mm;
+    /* 🔥 FIXED HEIGHT */
+    padding: 8mm;
+    box-sizing: border-box;
+    overflow: hidden;
+    /* 🔥 VERY IMPORTANT */
+    font-size: 10.5px;
+    /* 🔥 REDUCE */
+    line-height: 1.2;
+    /* 🔥 REDUCE */
+    background: #fff;
+}

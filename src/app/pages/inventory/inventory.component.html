@@ -1,0 +1,380 @@
+<div class="inventory-container">
+
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Inventory Management</h1>
+      <p class="page-subtitle">Track and manage product inventory</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openAddModal()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        Add Product
+      </button>
+    </div>
+  </div>
+
+  <!-- Search & Actions Bar -->
+  <div class="search-actions-bar">
+    <div class="search-wrapper">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" class="search-icon">
+        <path d="M16.5 16.5l-3.75-3.75M14.25 7.875a6.375 6.375 0 11-12.75 0 6.375 6.375 0 0112.75 0z"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <input type="text" class="search-input" placeholder="Search by product name, ID, category..."
+        [(ngModel)]="searchTerm">
+    </div>
+
+    <div class="action-buttons">
+      <input type="file" id="excelUpload" hidden (change)="handleExcelUpload($event)">
+      <button class="btn btn-upload" (click)="triggerFileUpload()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2m0 0L4.667 5.333M8 2v8"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Upload Excel
+      </button>
+      <button class="btn btn-download" (click)="downloadInventoryAsExcel()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M4.667 6.667L8 10m0 0l3.333-3.333M8 10V2"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Download Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Inventory Table -->
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Product ID</th>
+          <th>Location</th>
+          <th>Group</th>
+          <th>Item / Material</th>
+          <th>Size</th>
+          <th>Category</th>
+          <th>Vendor</th>
+          <th>Make</th>
+          <th>HSN</th>
+          <th>UOM</th>
+          <th>No. of Units</th>
+          <th>Qty</th>
+          <th>Rate (₹)</th>
+          <th>GST %</th>
+          <th>Weight</th>
+          <th>Specs</th>
+          <th>Total Value (₹)</th>
+          <th>Files</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <!-- ✅ FIXED: Remove 'let i = index', pass 'item' instead of 'i' -->
+        <tr *ngFor="let item of filteredItems()">
+          <td><span class="product-id">{{ item.productId }}</span></td>
+          <td>{{ item.location }}</td>
+          <td><span class="group-badge">{{ item.group }}</span></td>
+          <!-- ✅ FIXED: Use displayName if available, fallback to name -->
+          <td><span class="product-name">{{ item.displayName || item.name }}</span></td>
+          <td>{{ item.size }}</td>
+          <td>{{ item.category }}</td>
+          <td>{{ item.vendorName }}</td>
+          <td>{{ item.productMake }}</td>
+          <td><span class="hsn-code">{{ item.hsn }}</span></td>
+          <td><span class="uom-badge">{{ item.unit }}</span></td>
+          <td class="text-center">{{ item.numberOfUnits }}</td>
+          <td class="text-center">{{ item.quantity }}</td>
+          <td class="text-right"><span class="amount">₹{{ item.price | number:'1.2-2' }}</span></td>
+          <td class="text-center">{{ item.gst }}%</td>
+          <td>{{ item.weight }}</td>
+          <td class="specs-cell">{{ item.specifications || '-' }}</td>
+          <td class="text-right"><span class="total-value">₹{{ calculateTotalValue(item) | number:'1.2-2' }}</span></td>
+          <td class="text-center">
+            <!-- ✅ FIXED: Pass item instead of it -->
+            <button *ngIf="item.attachment" class="btn-attachment" (click)="viewAttachment(item)"
+              title="View attachment">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M14 5.333l-6.364 6.364a4.5 4.5 0 01-6.364-6.364l6.364-6.364a3 3 0 014.243 4.243L5.515 9.576a1.5 1.5 0 01-2.122-2.121l6.364-6.364"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <span *ngIf="!item.attachment" class="no-file">-</span>
+          </td>
+          <td class="actions-column">
+            <div class="actions-dropdown">
+              <!-- ✅ FIXED: Pass item instead of item.productId -->
+              <button class="btn-action-trigger" (click)="toggleActionMenu($event, item)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="3" r="1.5" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                  <circle cx="8" cy="13" r="1.5" fill="currentColor" />
+                </svg>
+              </button>
+              <!-- ✅ FIXED: Use item.name instead of item.productId, pass item instead of i -->
+              <div class="actions-menu" [class.active]="activeMenuId === item.name" [style.top]="menuPosition.top"
+                [style.left]="menuPosition.left">
+                <button class="action-item" (click)="openEditModal(item); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.333 2A1.886 1.886 0 0114 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor"
+                      stroke-width="1.5" />
+                  </svg>
+                  Edit
+                </button>
+                <div class="action-divider"></div>
+                <button class="action-item action-delete" (click)="deleteItem(item); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="filteredItems().length === 0">
+          <td colspan="19" class="empty-state">
+            <div class="empty-state-content">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <path d="M8 12h32M8 24h32M8 36h32" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              <p>No items found</p>
+              <span class="empty-hint">Click "Add Product" to get started</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ADD/EDIT PRODUCT MODAL -->
+<div class="modal-overlay" *ngIf="showModal" (click)="cancelModal()">
+  <div class="modal-content inventory-modal" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM4 3h16M9 16v-6M15 16v-3"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        {{ isEditing ? 'Edit Product' : 'Add New Product' }}
+      </h2>
+      <button class="modal-close" (click)="cancelModal()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form #invForm="ngForm" class="inventory-form">
+
+      <!-- Basic Information Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 1.5v15M13.5 4.5h-9a3 3 0 000 6h3a3 3 0 010 6h-9" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" />
+          </svg>
+          Basic Information
+        </h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Location <span class="required">*</span></label>
+            <input [(ngModel)]="form.location" name="location" required class="form-input"
+              placeholder="e.g., Warehouse A, Section B">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Group <span class="required">*</span></label>
+            <select [(ngModel)]="form.group" name="group" required class="form-select">
+              <option value="">Select Group</option>
+              <option value="Material Distribution Division">Material Distribution Division</option>
+              <option value="Projects">Projects</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Item / Material <span class="required">*</span></label>
+          <input [(ngModel)]="form.displayName" name="itemName" required class="form-input"
+            placeholder="Enter item or material name">
+        </div>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Size <span class="required">*</span></label>
+            <input [(ngModel)]="form.size" name="size" required class="form-input" placeholder="e.g., 2 inch, 50mm">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">HSN Code</label>
+            <input [(ngModel)]="form.hsn" name="hsn" class="form-input" placeholder="Enter HSN code">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">No. of rolls/Bundles/pcs</label>
+            <input type="number" [(ngModel)]="form.numberOfUnits" name="numberOfUnits" class="form-input"
+              placeholder="0" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">UOM (Unit of Measure) <span class="required">*</span></label>
+          <select [(ngModel)]="form.unit" name="unit" required class="form-select">
+            <option value="">Select UOM</option>
+            <option value="Kg">Kg (Kilogram)</option>
+            <option value="Piece">Piece</option>
+            <option value="Roll">Roll</option>
+            <option value="Bundle">Bundle</option>
+            <option value="Meter">Meter</option>
+            <option value="Liter">Liter</option>
+            <option value="Box">Box</option>
+            <option value="Set">Set</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quantity & Pricing Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 1.5v15M13.5 4.5h-6a3 3 0 000 6h3a3 3 0 010 6h-6" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" />
+          </svg>
+          Quantity & Pricing
+        </h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Quantity <span class="required">*</span></label>
+            <input type="number" [(ngModel)]="form.quantity" name="quantity" required class="form-input" placeholder="0"
+              min="0" step="0.01">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Rate (₹) <span class="required">*</span></label>
+            <input type="number" [(ngModel)]="form.price" name="price" required class="form-input" placeholder="0.00"
+              min="0" step="0.01">
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">GST % <span class="required">*</span></label>
+            <input type="number" [(ngModel)]="form.gst" name="gst" required class="form-input" placeholder="0" min="0"
+              max="100" step="0.01">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Total Value (₹)</label>
+            <input type="text" [value]="calculateFormTotalValue()" readonly class="form-input readonly-field">
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Details Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M15.75 9.75l-6.364 6.364a4.5 4.5 0 01-6.364-6.364l6.364-6.364a3 3 0 014.243 4.243l-6.365 6.364a1.5 1.5 0 01-2.121-2.122l6.364-6.364"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Additional Details
+        </h3>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <input [(ngModel)]="form.category" name="category" class="form-input" placeholder="Enter category">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Vendor Name</label>
+            <input [(ngModel)]="form.vendorName" name="vendorName" class="form-input" placeholder="Enter vendor">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Product Make</label>
+            <input [(ngModel)]="form.productMake" name="productMake" class="form-input" placeholder="Enter make">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Weight per Unit</label>
+          <input type="number" [(ngModel)]="form.weight" name="weight" class="form-input" placeholder="0.00" min="0"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Specifications</label>
+          <textarea [(ngModel)]="form.specifications" name="specifications" class="form-textarea" rows="3"
+            placeholder="Enter product specifications"></textarea>
+        </div>
+      </div>
+
+      <!-- Attachment Section -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M15.75 9.75l-6.364 6.364a4.5 4.5 0 01-6.364-6.364l6.364-6.364a3 3 0 014.243 4.243l-6.365 6.364a1.5 1.5 0 01-2.121-2.122l6.364-6.364"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Attachments
+        </h3>
+
+        <div class="form-group">
+          <label class="form-label">Upload File</label>
+          <div class="file-upload-area">
+            <input type="file" (change)="uploadAttachment($event)" class="file-input" id="fileUpload">
+            <label for="fileUpload" class="file-label">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" class="file-icon">
+                <path
+                  d="M28 20v5.333A2.667 2.667 0 0125.333 28H6.667A2.667 2.667 0 014 25.333V20M22.667 10.667L16 4m0 0L9.333 10.667M16 4v16"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="file-text">Choose file or drag here</span>
+              <span class="file-hint">Supported formats: PDF, Images, Documents</span>
+            </label>
+          </div>
+          <div *ngIf="form.attachment" class="file-success">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            File uploaded successfully
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-cancel" (click)="cancelModal()">Cancel</button>
+        <button type="button" class="btn btn-save" (click)="submitForm()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M13.333 7.333v6a1.333 1.333 0 01-1.333 1.334H4a1.333 1.333 0 01-1.333-1.334v-9.333A1.333 1.333 0 014 2.667h5.333"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          {{ isEditing ? 'Update' : 'Save' }} Product
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

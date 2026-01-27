@@ -1,0 +1,389 @@
+<div class="proforma-container">
+
+  <!-- Header Section -->
+  <div class="page-header" *ngIf="!isPrintMode">
+    <div class="header-content">
+      <h1 class="page-title">Proforma Invoice</h1>
+      <p class="page-subtitle">Create and manage proforma invoices</p>
+    </div>
+  </div>
+
+  <!-- Invoice Document -->
+  <div class="invoice-wrapper" [class.print-mode]="isPrintMode">
+    <div class="invoice-page" id="invoice-area">
+
+      <!-- HEADER WITH LOGO AND TITLE -->
+      <div class="inv-header">
+        <img src="assets/LOGO.jpg" class="inv-logo" alt="Company Logo" />
+        <h1 class="inv-title">PROFORMA INVOICE</h1>
+        <p class="inv-sub">(ISSUE OF INVOICE UNDER RULE 46 OF CENTRAL GOODS AND SERVICE TAX RULES 2017)</p>
+      </div>
+
+      <!-- COMPANY INFO BOX -->
+      <div class="company-info">
+        <h2 class="company-name">NAVBHARAT INSULATION &amp; ENGG CO</h2>
+        <div class="company-details">
+          A. N. House, 4th Floor, 31st Road, Linking Road, Bandra (West) Mumbai - 400 050 Maharashtra [27]<br>
+          Warehouse: Agarwal Industrial Estate, Plot No. 6, Unit No. 1, Sativali Road, Vasai Road (E), Dist. Palghar -
+          401208<br>
+          • Email: info&#64;navbharatgroup.com • Tel/Toll Free No<br>
+          <strong>PAN NO.: AAHPK4195P, GST No.: 27AAHPK4195P1ZZ</strong><br>
+          Subject to MUMBAI' Jurisdiction
+        </div>
+      </div>
+
+      <!-- BUYER + PROFORMA DETAILS -->
+      <table class="info-table">
+        <colgroup>
+          <col style="width:50%;">
+          <col style="width:50%;">
+        </colgroup>
+
+        <tr>
+          <!-- LEFT BUYER BOX -->
+          <td class="buyer-box">
+            <div class="field-row">
+              <strong>Buyer:</strong><br>
+              <select *ngIf="!isPrintMode" class="inv-input" [(ngModel)]="form.buyerId" (change)="onCustomerSelect()">
+                <option value="" disabled>Select Customer</option>
+                <option *ngFor="let c of customers" [value]="c.id">
+                  {{ c.name }} – {{ c.companyName }}
+                </option>
+              </select>
+              <span *ngIf="isPrintMode" class="print-value">{{ form.buyerName }}</span>
+            </div>
+
+            <div class="field-row">
+              <textarea *ngIf="!isPrintMode" class="inv-input buyer-addr-input"
+                [(ngModel)]="form.buyerAddress"></textarea>
+              <span *ngIf="isPrintMode" class="print-value">{{ form.buyerAddress }}</span>
+            </div>
+
+            <div class="field-row">
+              <strong>PARTY GST NO.:</strong>
+              <input *ngIf="!isPrintMode" class="inv-input small-input" [(ngModel)]="form.buyerGST">
+              <span *ngIf="isPrintMode" class="print-value">{{ form.buyerGST }}</span>
+            </div>
+
+            <div class="field-row">
+              <strong>PAN NO.:</strong>
+              <input *ngIf="!isPrintMode" class="inv-input small-input" [(ngModel)]="form.buyerPAN">
+              <span *ngIf="isPrintMode" class="print-value">{{ form.buyerPAN }}</span>
+            </div>
+          </td>
+
+          <!-- RIGHT PROFORMA BOX -->
+          <td class="proforma-box">
+            <div class="field-row">
+              <strong>Proforma Invoice No.:</strong>
+              <input *ngIf="!isPrintMode" class="inv-input small-input" [(ngModel)]="form.proformaNumber">
+              <span *ngIf="isPrintMode" class="print-value">{{ form.proformaNumber }}</span>
+            </div>
+
+            <div class="field-row">
+              <strong>Date:</strong>
+              <input *ngIf="!isPrintMode" type="date" class="inv-input small-input" [(ngModel)]="form.date">
+              <span *ngIf="isPrintMode" class="print-value">{{ form.date }}</span>
+            </div>
+
+            <div class="field-row">
+              <strong>Purchase Order No.:</strong>
+              <input *ngIf="!isPrintMode" class="inv-input small-input" [(ngModel)]="form.refNo">
+              <span *ngIf="isPrintMode" class="print-value">{{ form.refNo }}</span>
+            </div>
+
+            <div class="field-row">
+              <strong>Date:</strong>
+              <input *ngIf="!isPrintMode" type="date" class="inv-input small-input" [(ngModel)]="form.orderDate">
+              <span *ngIf="isPrintMode" class="print-value">{{ form.orderDate }}</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- ITEMS TABLE -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width: 8%;">SR.<br>NO.</th>
+            <th style="width: 35%;">DESCRIPTION</th>
+            <th style="width: 12%;">HSN/SAC</th>
+            <th style="width: 10%;">QTY</th>
+            <th style="width: 10%;">UOM</th>
+            <th style="width: 12%;">RATE/UOM</th>
+            <th style="width: 13%;">AMOUNT (RS.)</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let it of form.items; let i = index">
+            <td class="center">{{ i+1 }}</td>
+            <td>
+              <input *ngIf="!isPrintMode" class="inv-input" [(ngModel)]="it.description" (input)="calculateTotals()">
+              <span *ngIf="isPrintMode">{{ it.description }}</span>
+            </td>
+            <td>
+              <input *ngIf="!isPrintMode" class="inv-input small-input" [(ngModel)]="it.hsn">
+              <span *ngIf="isPrintMode">{{ it.hsn }}</span>
+            </td>
+            <td>
+              <input *ngIf="!isPrintMode" type="number" class="inv-input small-input" [(ngModel)]="it.qty"
+                (input)="calculateTotals()">
+              <span *ngIf="isPrintMode">{{ it.qty }}</span>
+            </td>
+            <td>
+              <input *ngIf="!isPrintMode" class="inv-input small-input" [(ngModel)]="it.uom">
+              <span *ngIf="isPrintMode">{{ it.uom }}</span>
+            </td>
+            <td class="right">
+              <input *ngIf="!isPrintMode" type="number" class="inv-input small-input right-input" [(ngModel)]="it.rate"
+                (input)="calculateTotals()">
+              <span *ngIf="isPrintMode">{{ it.rate }}</span>
+            </td>
+            <td class="right">{{ ((+it.qty || 0) * (+it.rate || 0)) | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- PAYMENT TERMS + GST | TOTALS SUMMARY -->
+      <div class="middle-section">
+        <div class="left-middle">
+          <!-- PAYMENT TERMS -->
+          <div class="payment-terms-box">
+            <strong>PAYMENT TERMS:</strong><br>
+            <input *ngIf="!isPrintMode" class="inv-input" [(ngModel)]="form.paymentTerms">
+            <span *ngIf="isPrintMode" class="print-value">{{ form.paymentTerms }}</span>
+          </div>
+
+          <!-- GST/PAN + AMOUNT IN WORDS -->
+          <div class="gst-amount-box">
+            <div class="gst-pan-row">
+              <strong>GST NO.: 27AAHPK4195P1ZZ</strong>
+            </div>
+            <div class="gst-pan-row">
+              <strong>PAN NO.: AAHPK4195P</strong>
+            </div>
+            <div class="amount-words-row">
+              <strong>Rs.: {{ amountInWords(form.total) }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-middle">
+          <!-- TOTALS SUMMARY -->
+          <table class="totals-summary">
+            <tr>
+              <td>Sub Total</td>
+              <td class="right-col">{{ form.subTotal | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td>Other Charges</td>
+              <td class="right-col">
+                <input *ngIf="!isPrintMode" type="number" class="inv-input right-input small-input"
+                  [(ngModel)]="form.otherCharges" (input)="calculateTotals()">
+                <span *ngIf="isPrintMode" class="print-value">{{ form.otherCharges || 0 }}</span>
+              </td>
+            </tr>
+            <tr>
+              <td>Total</td>
+              <td class="right-col">{{ (form.subTotal + (form.otherCharges || 0)) | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td>Advance &#64; 50%</td>
+              <td class="right-col">
+                <input *ngIf="!isPrintMode" type="number" class="inv-input right-input small-input"
+                  [(ngModel)]="form.advance" (input)="calculateTotals()">
+                <span *ngIf="isPrintMode" class="print-value">{{ form.advance || 0 }}</span>
+              </td>
+            </tr>
+            <tr>
+              <td>CGST &#64; 9%</td>
+              <td class="right-col">{{ form.cgst | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td>SGST &#64; 9%</td>
+              <td class="right-col">{{ form.sgst | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td>IGST &#64; 18%</td>
+              <td class="right-col">{{ form.igst | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td>Round Off:</td>
+              <td class="right-col">{{ form.roundOff | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td><strong>Total Invoice Value</strong></td>
+              <td class="right-col"><strong>{{ form.total | number:'1.2-2' }}</strong></td>
+            </tr>
+            <tr>
+              <td>Advance Recd.</td>
+              <td class="right-col">{{ form.advance | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td><strong>Total Receivable</strong></td>
+              <td class="right-col"><strong>{{ form.totalReceivable | number:'1.2-2' }}</strong></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- BANK DETAILS SECTION -->
+      <div class="bank-section">
+        <div class="bank-content">
+          <div class="bank-left">
+            <div class="bank-title">
+              <strong>OUR BANK DETAILS:-</strong>
+            </div>
+
+            <select *ngIf="!isPrintMode" class="inv-input bank-select" [(ngModel)]="form.selectedBankKey"
+              (change)="onBankChange()">
+              <option value="" disabled>⬇ Select Bank Details</option>
+              <option *ngFor="let b of bankOptions" [value]="b.key">
+                {{ b.bank }} – {{ b.branch }}
+              </option>
+            </select>
+
+            <div *ngIf="form.bankDetails?.bank">
+              <div class="bank-row"><span class="bank-label">TITLE OF A/C.</span> {{ form.bankDetails.name }}</div>
+              <div class="bank-row"><span class="bank-label">BANK NAME</span> {{ form.bankDetails.bank }}</div>
+              <div class="bank-row"><span class="bank-label">BANK A/C. NO.</span> {{ form.bankDetails.account }}</div>
+              <div class="bank-row"><span class="bank-label">BRANCH ADDRESS</span> {{ form.bankDetails.branch }}</div>
+              <div class="bank-row"><span class="bank-label">IFSC CODE</span> {{ form.bankDetails.ifsc }}</div>
+            </div>
+
+            <div *ngIf="!form.bankDetails?.bank" class="bank-placeholder">
+              ⚠ Please select bank details
+            </div>
+          </div>
+
+          <div class="bank-right">
+            <strong>For Navbharat Insulation &amp; Engg Co</strong><br><br><br><br>
+            <div class="signature-line">Authorised Signatory</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TERMS & CONDITIONS + SIGNATURES -->
+      <div class="bottom-section">
+        <div class="terms-section">
+          <strong>TERMS AND CONDITIONS:-</strong>
+          <ol>
+            <li>Any claim in respect of the Invoice must be made within three days</li>
+            <li>Sales subject to Mumbai Jurisdiction.</li>
+            <li>Interest &#64;24% p.a. will be charged if the payment is not made within time.</li>
+            <li>Goods once sold will not be taken back.</li>
+            <li>Our risk &amp; responsibility ceases on delivery of goods to Motor, Lorry or Steamer</li>
+            <li>Cheques are to be paid cross order &amp; in favour of the company.</li>
+          </ol>
+        </div>
+
+        <div class="signatures-section">
+          <div class="sig-field">
+            Prepared by:
+            <input *ngIf="!isPrintMode" class="inv-input small-input" [(ngModel)]="form.preparedBy">
+            <span *ngIf="isPrintMode" class="print-value">{{ form.preparedBy }}</span>
+          </div>
+          <div class="sig-field">
+            Checked by:
+            <input *ngIf="!isPrintMode" class="inv-input small-input" [(ngModel)]="form.checkedBy">
+            <span *ngIf="isPrintMode" class="print-value">{{ form.checkedBy }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="inv-footer">
+        ADM. OFFICE: A. N. HOUSE, 4TH FLOOR, 31ST ROAD, LINKING ROAD, BANDRA WEST, MUMBAI - 400 050
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONTROL BUTTONS -->
+  <div class="controls" *ngIf="!isPrintMode">
+    <button class="btn btn-secondary" (click)="addItem()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      Add Item
+    </button>
+    <button class="btn btn-secondary" (click)="calculateTotals()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M13.333 2.667v10.666M2.667 8h10.666" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      Recalculate
+    </button>
+    <button class="btn btn-save" (click)="save()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path
+          d="M13.333 7.333v6a1.333 1.333 0 01-1.333 1.334H4a1.333 1.333 0 01-1.333-1.334v-9.333A1.333 1.333 0 014 2.667h5.333"
+          stroke="currentColor" stroke-width="1.5" />
+      </svg>
+      Save
+    </button>
+    <button class="btn btn-primary" (click)="downloadPDF()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path
+          d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M4.667 6.667L8 10m0 0l3.333-3.333M8 10V2"
+          stroke="currentColor" stroke-width="1.5" />
+      </svg>
+      Download PDF
+    </button>
+  </div>
+
+  <!-- SAVED PROFORMA LIST -->
+  <div class="saved-list" *ngIf="proformas && proformas.length && !isPrintMode">
+    <h3 class="list-title">Saved Proforma Invoices</h3>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Proforma No.</th>
+            <th>Buyer Name</th>
+            <th>Date</th>
+            <th>Total (₹)</th>
+            <th class="actions-column-table">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let p of proformas">
+            <td><span class="proforma-ref">{{ p.proformaNumber }}</span></td>
+            <td><span class="buyer-name">{{ p.buyerName }}</span></td>
+            <td>{{ p.date }}</td>
+            <td><span class="amount">₹{{ p.total | number:'1.2-2' }}</span></td>
+
+            <td class="actions-column-table">
+              <button class="btn-table btn-edit" (click)="edit(p)">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M10 2a1.886 1.886 0 012.667 2.667L4 13.333.667 14 2 10.667 10.667 2z" stroke="currentColor"
+                    stroke-width="1.5" />
+                </svg>
+                Edit
+              </button>
+              <button class="btn-table btn-download" (click)="downloadPDF(p)">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path
+                    d="M12.25 8.75v2.333A1.167 1.167 0 0111.083 12.25H2.917A1.167 1.167 0 011.75 11.083V8.75M4.083 5.833L7 8.75m0 0l2.917-2.917M7 8.75V1.75"
+                    stroke="currentColor" stroke-width="1.5" />
+                </svg>
+                Download
+              </button>
+              <button class="btn-table btn-delete" (click)="deleteProforma(p)">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path
+                    d="M1.75 3.5h10.5M4.667 3.5V2.333A1.167 1.167 0 015.833 1.167h2.334A1.167 1.167 0 019.333 2.333V3.5m1.75 0v8.167a1.167 1.167 0 01-1.166 1.166H4.083a1.167 1.167 0 01-1.166-1.166V3.5h8.166z"
+                    stroke="currentColor" stroke-width="1.5" />
+                </svg>
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

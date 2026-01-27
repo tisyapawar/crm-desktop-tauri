@@ -1,0 +1,351 @@
+<div class="reminders-container">
+
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Reminders & Alerts</h1>
+      <p class="page-subtitle">Manage action reminders and payment alerts</p>
+    </div>
+  </div>
+
+  <!-- ================= ACTION REMINDERS CARD ================= -->
+  <div class="section-card">
+    <div class="card-header">
+      <div class="header-left">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="card-icon">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <h2 class="card-title">Action Reminders</h2>
+      </div>
+      <button class="btn btn-primary" (click)="openAddModal()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        Add Reminder
+      </button>
+    </div>
+
+    <!-- Date Filter Controls -->
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label class="filter-label">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M13.333 2.667H2.667c-.737 0-1.334.597-1.334 1.333v9.333c0 .737.597 1.334 1.334 1.334h10.666c.737 0 1.334-.597 1.334-1.334V4c0-.736-.597-1.333-1.334-1.333zM10.667 1.333v2.667M5.333 1.333v2.667M1.333 6.667h13.334"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Select Date:
+        </label>
+        <input type="date" [(ngModel)]="selectedDate" (change)="loadUserReminders()" class="date-input" />
+        <button class="btn btn-apply" (click)="filterReminders()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M14 4L6 12l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Apply
+        </button>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-secondary" (click)="generateUserReminderReport()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M9.333 1.333H4A1.333 1.333 0 002.667 2.667v10.666A1.333 1.333 0 004 14.667h8a1.333 1.333 0 001.333-1.334V5.333l-4-4z"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Report
+        </button>
+        <button class="btn btn-secondary" (click)="emailUserReminders()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M2.667 2.667h10.666c.737 0 1.334.597 1.334 1.333v8c0 .736-.597 1.333-1.334 1.333H2.667c-.737 0-1.334-.597-1.334-1.333V4c0-.736.597-1.333 1.334-1.333z"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M14.667 4L8 8.667 1.333 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Email
+        </button>
+      </div>
+    </div>
+
+    <div class="info-banner">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM10 6.667V10M10 13.333h.008" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>Date selection applies only to <strong>Action Reminders</strong>. Payment alerts are system
+        generated.</span>
+    </div>
+
+    <!-- Reminders Table -->
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 60px;">Sr No</th>
+            <th>Name</th>
+            <th>Mobile</th>
+            <th>Time</th>
+            <th>Type</th>
+            <th>Reference</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let r of filteredReminders; let i = index">
+            <td class="text-center">{{ i + 1 }}</td>
+            <td><span class="customer-name">{{ r.name }}</span></td>
+            <td>{{ r.mobile || '-' }}</td>
+            <td><span class="time-badge">{{ r.time }}</span></td>
+            <td>
+              <span class="type-badge" [ngClass]="{
+                'badge-offer': r.type === 'offer',
+                'badge-call': r.type === 'call',
+                'badge-payment': r.type === 'payment',
+                'badge-general': r.type === 'general'
+              }">
+                {{ r.type | titlecase }}
+              </span>
+            </td>
+            <td>
+              <span class="ref-link" *ngIf="r.referenceNo" (click)="navigateFromReminder(r)">
+                {{ r.referenceNo }}
+              </span>
+              <span *ngIf="!r.referenceNo">-</span>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredReminders.length === 0">
+            <td colspan="6" class="empty-state">
+              <div class="empty-state-content">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                  <path d="M24 12v12l6 6m12-6a18 18 0 11-36 0 18 18 0 0136 0z" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p>No action reminders for selected date</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================= PAYMENT SYSTEM ALERTS CARD ================= -->
+  <div class="section-card alert-card">
+    <div class="card-header">
+      <div class="header-left">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="card-icon alert-icon">
+          <path
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div>
+          <h2 class="card-title">System Alerts</h2>
+          <span class="card-subtitle">Overdue Payments</span>
+        </div>
+      </div>
+      <span class="alert-count" *ngIf="dueInvoices.length > 0">{{ dueInvoices.length }} Alert{{ dueInvoices.length > 1 ?
+        's' : '' }}</span>
+    </div>
+
+    <!-- Alerts Table -->
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 60px;">#</th>
+            <th>Customer</th>
+            <th>Type</th>
+            <th>Reference</th>
+            <th>Invoice No</th>
+            <th>Invoice Date</th>
+            <th>Due Date</th>
+            <th>Status</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let r of dueInvoices; let i = index" class="alert-row">
+            <td class="text-center">{{ i + 1 }}</td>
+            <td><span class="customer-name">{{ r.name }}</span></td>
+            <td>
+              <span class="type-badge badge-payment">Payment</span>
+            </td>
+            <td>
+              <span class="ref-link" (click)="navigateFromReminder(r)">{{ r.referenceNo }}</span>
+            </td>
+            <td><span class="invoice-ref">{{ r.referenceNo }}</span></td>
+            <td>{{ r.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td>{{ r.date | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="status-badge overdue">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 1.167v5.833l2.917 2.917" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                  <path d="M7 12.833A5.833 5.833 0 107 1.167a5.833 5.833 0 000 11.666z" stroke="currentColor"
+                    stroke-width="1.5" />
+                </svg>
+                Overdue
+              </span>
+            </td>
+            <td class="actions-column">
+              <button class="btn btn-email" (click)="openPaymentReminder(r.name)">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path
+                    d="M2.333 2.333h9.334c.644 0 1.166.522 1.166 1.167v7c0 .644-.522 1.167-1.166 1.167H2.333c-.644 0-1.167-.523-1.167-1.167v-7c0-.645.523-1.167 1.167-1.167z"
+                    stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M12.833 3.5L7 7.583 1.167 3.5" stroke="currentColor" stroke-width="1.2"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Send Email
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="dueInvoices.length === 0">
+            <td colspan="9" class="empty-state">
+              <div class="empty-state-content success">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                  <path d="M44 24c0 11.046-8.954 20-20 20S4 35.046 4 24 12.954 4 24 4s20 8.954 20 20z"
+                    stroke="currentColor" stroke-width="2" />
+                  <path d="M16 24l6 6 12-12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+                <p>No outstanding payment alerts</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= PAYMENT REMINDER MODAL ================= -->
+<div class="modal-overlay" *ngIf="showPaymentEmail" (click)="closePaymentEmail()">
+  <div class="modal-content email-modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Payment Reminder Email
+      </h2>
+      <button class="modal-close" (click)="closePaymentEmail()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="email-body">
+      <label class="form-label">Email Content:</label>
+      <textarea class="email-textarea" [(ngModel)]="emailBody" rows="12"></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closePaymentEmail()">Cancel</button>
+      <button class="btn btn-secondary" (click)="generateReminderPDF(selectedCustomerName)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M4.667 6.667L8 10m0 0l3.333-3.333M8 10V2"
+            stroke="currentColor" stroke-width="1.5" />
+        </svg>
+        Download PDF
+      </button>
+      <button class="btn btn-save" (click)="sendPaymentEmail()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M14.667 2L7.333 9.333M14.667 2L10 14.667 7.333 9.333M14.667 2L2 6.667l5.333 2.666"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Send Email
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= ADD REMINDER MODAL ================= -->
+<div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="modal-content reminder-modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Add Reminder
+      </h2>
+      <button class="modal-close" (click)="closeAddModal()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form class="reminder-form">
+      <div class="row-2">
+        <div class="form-group">
+          <label class="form-label">Name <span class="required">*</span></label>
+          <input class="form-input" [(ngModel)]="form.name" name="name" placeholder="Enter name" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mobile</label>
+          <input class="form-input" [(ngModel)]="form.mobile" name="mobile" placeholder="Enter mobile number" />
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="form-group">
+          <label class="form-label">Time <span class="required">*</span></label>
+          <input class="form-input" type="time" [(ngModel)]="form.time" name="time" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reminder Type <span class="required">*</span></label>
+          <select class="form-select" [(ngModel)]="form.type" name="type">
+            <option value="offer">Offer Follow-up</option>
+            <option value="call">Call</option>
+            <option value="payment">Payment Follow-up</option>
+            <option value="general">General</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="form.type === 'offer' || form.type === 'payment'">
+        <label class="form-label">
+          {{ form.type === 'offer' ? 'Offer / Inquiry No' : 'Invoice No' }}
+        </label>
+        <input class="form-input" [(ngModel)]="form.referenceNo" name="referenceNo"
+          [placeholder]="form.type === 'offer' ? 'Enter offer/inquiry number' : 'Enter invoice number'" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Note</label>
+        <textarea class="form-textarea" [(ngModel)]="form.note" name="note" rows="3"
+          placeholder="Additional notes (optional)"></textarea>
+      </div>
+    </form>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closeAddModal()">Cancel</button>
+      <button class="btn btn-save" (click)="saveReminder()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M13.333 7.333v6a1.333 1.333 0 01-1.333 1.334H4a1.333 1.333 0 01-1.333-1.334v-9.333A1.333 1.333 0 014 2.667h5.333"
+            stroke="currentColor" stroke-width="1.5" />
+        </svg>
+        Save Reminder
+      </button>
+    </div>
+
+  </div>
+</div>

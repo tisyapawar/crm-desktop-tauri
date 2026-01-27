@@ -1,0 +1,251 @@
+<div class="page-container" *ngIf="invoice">
+    <div class="invoice-page" id="tax-invoice-area">
+
+        <!-- ================= HEADER ================= -->
+        <table class="header-table">
+            <tr>
+                <td style="width:20%">
+                    <!-- Updated logo with proper path -->
+                    <img src="assets/LOGO.jpg" class="inv-logo" crossorigin="anonymous" alt="Company Logo"
+                        onerror="this.style.display='none'" />
+                </td>
+
+                <td style="width:60%" class="center bold">
+                    TAX INVOICE
+                </td>
+
+                <td style="width:20%" class="yellow-box center bold">
+                    ORIGINAL FOR RECIPIENT
+                </td>
+            </tr>
+        </table>
+
+        <div class="company-block">
+            <div class="company-name">NAVBHARAT INSULATION &amp; ENGG CO</div>
+            <div class="company-addr">
+                Regd. Off.: A. N. House, 4th Floor, 31st Road, Linking Road, Bandra (West), Mumbai - 400050<br>
+                Warehouse: Agarwal Industrial Estate, Plot No. 6, Unit No. 1, Satvali Road, Vasai Road (E),
+                Dist. Palghar - 401208<br>
+                PAN NO.: AAHKP4195P &nbsp;&nbsp; GST NO.: 27AAHKP4195P1ZZ
+            </div>
+        </div>
+
+        <!-- ================= BILL TO ================= -->
+        <table class="info-table">
+            <tr class="yellow-row">
+                <td>Bill To</td>
+                <td>Tax Invoice No.: {{ invoice.invoiceNo }}</td>
+            </tr>
+
+            <tr>
+                <td>
+                    {{ invoice.billTo.name }}<br>
+                    {{ invoice.billTo.address }}<br>
+                    GSTIN: {{ invoice.billTo.gstin }}<br>
+                    PAN: {{ invoice.billTo.pan }}<br>
+                    Place of Supply: {{ invoice.billTo.placeOfSupply }}
+                </td>
+
+                <td>
+                    Date: {{ invoice.invoiceDate }}<br>
+                    Order Ref No.: {{ invoice.orderRefNo }}<br>
+                    Supply State Code: {{ invoice.supplyStateCode }}
+                </td>
+            </tr>
+        </table>
+
+        <!-- ================= SHIP TO ================= -->
+        <table class="info-table">
+            <tr class="yellow-row">
+                <td>Ship To</td>
+                <td>Supply Type: {{ invoice.supplyType }}</td>
+            </tr>
+
+            <tr>
+                <td>
+                    {{ invoice.shipTo.name }}<br>
+                    {{ invoice.shipTo.address }}<br>
+                    GSTIN: {{ invoice.shipTo.gstin }}<br>
+                    PAN: {{ invoice.shipTo.pan }}<br>
+                    Place of Supply: {{ invoice.shipTo.placeOfSupply }}
+                </td>
+
+                <td>
+                    Supply Type: GST 18% / IGST 18%<br>
+                    E-Way Bill No.: {{ invoice.ewayBillNo }}<br>
+                    Date: {{ invoice.invoiceDate }}<br>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ================= ITEMS ================= -->
+        <table class="items-table">
+            <thead>
+                <tr class="yellow-row">
+                    <th>Sr.</th>
+                    <th>Particulars</th>
+                    <th>HSN/SAC</th>
+                    <th>UOM</th>
+                    <th>Qty</th>
+                    <th>Rate (Rs./UOM)</th>
+                    <th>Amount (Rs.)</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let it of invoice.items">
+                    <td class="center">{{ it.srNo }}</td>
+                    <td>{{ it.particulars }}</td>
+                    <td class="center">{{ it.hsn }}</td>
+                    <td class="center">{{ it.uom }}</td>
+                    <td class="center">{{ it.qty }}</td>
+                    <td class="right">{{ it.rate | number:'1.2-2' }}</td>
+                    <td class="right">{{ it.amount | number:'1.2-2' }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ================= TOTALS + TRANSPORT ================= -->
+        <table class="info-table">
+            <tr>
+                <!-- LEFT BLOCK: Transport -->
+                <td style="width:55%; vertical-align:top;">
+                    <strong>Dispatch &amp; Transport Details</strong><br><br>
+                    Name of Transport: {{ invoice.transport.name }}<br>
+                    Mode of Transport: {{ invoice.transport.mode }}<br>
+                    L.R. No.: {{ invoice.transport.lrNo }}<br>
+                    Vehicle Reg. No.: {{ invoice.transport.vehicleNo }}<br>
+                    Date: {{ invoice.invoiceDate }}
+                </td>
+
+                <!-- RIGHT BLOCK: TOTALS (SPAN 2 ROWS) -->
+                <td style="width:45%; vertical-align:top;" rowspan="2">
+                    SUB TOTAL I : {{ invoice.subTotal1 | number:'1.2-2' }}<br>
+                    OTHER CHARGES : {{ invoice.otherCharges | number:'1.2-2' }}<br>
+                    FREIGHT CHARGES : {{ invoice.freightCharges | number:'1.2-2' }}<br>
+                    PACKING CHARGES : {{ invoice.packingCharges | number:'1.2-2' }}<br>
+
+                    <!-- Show CGST/SGST only for intra-state -->
+                    <ng-container *ngIf="invoice.supplyType === 'GST'">
+                        CGST (9%) : {{ invoice.cgst | number:'1.2-2' }}<br>
+                        SGST (9%) : {{ invoice.sgst | number:'1.2-2' }}<br>
+                    </ng-container>
+
+                    <!-- Show IGST only for inter-state -->
+                    <ng-container *ngIf="invoice.supplyType === 'IGST'">
+                        IGST (18%) : {{ invoice.igst | number:'1.2-2' }}<br>
+                    </ng-container>
+
+                    ROUND OFF (+/-) : {{ invoice.roundOff | number:'1.2-2' }}<br>
+
+                    <div class="yellow-box total-box">
+                        <strong>GRAND TOTAL (Rs.) {{ invoice.grandTotal | number:'1.2-2' }}</strong>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td style="vertical-align:top;">
+                    <strong>Remark:</strong><br><br>
+                    {{ invoice.remarks || '-' }}<br><br>
+
+                    <strong>Payment Terms:</strong><br>
+                    {{ invoice.paymentTerms || '-' }}<br><br>
+
+                    <strong>Due Date:</strong><br>
+                    {{ invoice.dueDate || '-' }}
+                </td>
+            </tr>
+        </table>
+
+        <!-- ================= AMOUNT CHARGEABLE (WORDS) ================= -->
+        <table class="info-table">
+            <tr>
+                <td style="width:80%; vertical-align:top;">
+                    <strong>Amount Chargeable:</strong><br><br>
+
+                    <ng-container *ngIf="invoice.supplyType === 'GST'">
+                        CGST (Rs. {{ invoice.cgst | number:'1.2-2' }}):
+                        {{ numberToWordsIndian(invoice.cgst) }}<br>
+
+                        SGST (Rs. {{ invoice.sgst | number:'1.2-2' }}):
+                        {{ numberToWordsIndian(invoice.sgst) }}<br>
+                    </ng-container>
+
+                    <ng-container *ngIf="invoice.supplyType === 'IGST'">
+                        IGST (Rs. {{ invoice.igst | number:'1.2-2' }}):
+                        {{ numberToWordsIndian(invoice.igst) }}<br>
+                    </ng-container>
+
+                    <br>
+                    <strong>
+                        Grand Total of Invoice:
+                        {{ numberToWordsIndian(invoice.grandTotal) }}
+                    </strong>
+                </td>
+
+                <td style="width:20%; text-align:right; vertical-align:top;">
+                    <strong>E. &amp; O. E.</strong>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ================= BANK DETAILS ================= -->
+        <table class="info-table">
+            <tr>
+                <td>
+                    <strong>BANK DETAILS :</strong>
+                    HDFC BANK LTD Branch: Bandra West, Mumbai - 400050<br>
+                    A/c No. 50200105082845 &nbsp;&nbsp;
+                    IFSC: HDFC0001316
+                </td>
+            </tr>
+        </table>
+
+        <!-- ================= DECLARATION ================= -->
+        <table class="info-table">
+            <tr>
+                <td style="vertical-align:top;">
+                    Certified that the particulars given above are true and correct and the amount indicated represents
+                    the price actually charged and that there is no flow of additional consideration directly or
+                    indirectly from the buyer or certified that the particulars given above are true and correct and
+                    the amount indicated is provisional as additional consideration will be received from the buyer
+                    on account of:<br><br>
+
+                    (1) Subject to Mumbai Jurisdiction.<br>
+                    (2) Payment should be made on agreed payment terms.<br>
+                    (3) Interest &#64;24&#37;pa will be charged for delay payment.<br>
+                    (4) Any objection in respect to this bill should be made within 24 hours after it is presented.<br>
+                    (5) If there is any complaint of shortage / damage or quality then material should not be used or
+                    disposed off & complaint should be given in writing within 24 hours of receipt of the material.<br>
+                    (6) The above stated material is received in good condition as per our Order and is duly checked
+                    & approved by us.
+                    <br><br>
+
+                    <div style="text-align:right; font-weight:bold;">
+                        For, Navbharat Insulation &amp; Engg Co
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ================= SIGNATURE ROW ================= -->
+        <table class="info-table">
+            <tr style="height:70px;">
+                <td style="width:33%; vertical-align:bottom;">
+                    <strong>PREPARED BY</strong><br>
+                    Administrator
+                </td>
+
+                <td style="width:33%; text-align:center; vertical-align:bottom;">
+                    <strong>RECEIVED BY</strong><br>
+                    (WITH COMPANY STAMP)
+                </td>
+
+                <td style="width:33%; text-align:right; vertical-align:bottom;">
+                    <strong>AUTHORISED SIGNATORY</strong>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+</div>

@@ -1,0 +1,217 @@
+<div class="offer-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBackToList()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 10H5M5 10l5 5M5 10l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        Back
+      </button>
+      <div class="header-content">
+        <h1 class="page-title">Create Offer</h1>
+        <p class="page-subtitle">Generate a professional offer for your customer</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Form Card -->
+  <div class="offer-card">
+    <form class="offer-form">
+
+      <!-- CUSTOMER INFORMATION -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M15 15.75v-1.5a3 3 0 00-3-3H6a3 3 0 00-3 3v1.5M12 5.25a3 3 0 11-6 0 3 3 0 016 0z"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Customer Information
+        </h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Customer <span class="required">*</span></label>
+            <select class="form-select" [(ngModel)]="selectedCustomer" (ngModelChange)="onCustomerChange()"
+              name="customer">
+              <option [ngValue]="null">Select Customer</option>
+              <option *ngFor="let c of customers" [ngValue]="c">{{ c.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Business Vertical</label>
+            <select class="form-select" [(ngModel)]="offer.businessVertical" name="vertical">
+              <option value="">Select Vertical</option>
+              <option *ngFor="let v of businessVerticals">{{ v }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- OFFER TERMS -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M13.5 1.5H4.5A1.5 1.5 0 003 3v12a1.5 1.5 0 001.5 1.5h9a1.5 1.5 0 001.5-1.5V3a1.5 1.5 0 00-1.5-1.5zM6 6h6M6 9h6M6 12h3"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          Offer Terms
+        </h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Payment Terms</label>
+            <input type="text" class="form-input" [(ngModel)]="offer.paymentTerms" name="payment"
+              placeholder="e.g. 50% advance, 50% on delivery" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Offer Validity</label>
+            <input type="text" class="form-input" [(ngModel)]="offer.validity" name="validity"
+              placeholder="e.g. 30 days" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Terms & Conditions</label>
+          <textarea class="form-textarea" [(ngModel)]="offer.terms" name="terms" rows="4"
+            placeholder="Enter Terms & Conditions"></textarea>
+        </div>
+      </div>
+
+      <!-- ITEMS -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M2.25 3.75h13.5M2.25 7.5h13.5M2.25 11.25h13.5M2.25 15h13.5" stroke="currentColor"
+              stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          Items
+        </h3>
+
+        <div class="items-table-wrapper">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>HSN Code</th>
+                <th>Quantity</th>
+                <th>Rate (₹)</th>
+                <th>Total (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of offer.items; let i = index" class="item-row">
+                <td>{{ item.name }}</td>
+                <td>{{ item.hsn }}</td>
+                <td class="qty-cell">{{ item.qty }}</td>
+                <td class="rate-cell">
+                  <input type="number" class="table-input" [(ngModel)]="item.rate" (input)="calcTotals()"
+                    [name]="'rate-'+i" />
+                </td>
+                <td class="total-cell">₹{{ item.total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty-state" *ngIf="!offer.items || offer.items.length === 0">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <path d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4 4 12.954 4 24s8.954 20 20 20z" stroke="currentColor"
+              stroke-width="2" />
+            <path d="M24 16v12M24 32h.02" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <p>No items selected. Please select a customer with an inquiry to populate items.</p>
+        </div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="summary-section">
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="summary-label">Subtotal:</span>
+            <span class="summary-value">₹{{ offer.subtotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">GST (18%):</span>
+            <span class="summary-value">₹{{ offer.gst | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-row summary-total">
+            <span class="summary-label">Grand Total:</span>
+            <span class="summary-value">₹{{ offer.grandTotal | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-cancel" (click)="goBackToList()">Cancel</button>
+        <button type="button" class="btn btn-save" (click)="saveOffer()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M13.333 7.333v6a1.333 1.333 0 01-1.333 1.334H4a1.333 1.333 0 01-1.333-1.334v-9.333A1.333 1.333 0 014 2.667h5.333"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Save Offer
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- INQUIRY POPUP -->
+<div *ngIf="showInquiryPopup" class="modal-overlay" (click)="showInquiryPopup = false">
+  <div class="modal-content inquiry-popup-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+            stroke="currentColor" stroke-width="2" />
+        </svg>
+        Select Inquiry
+      </h2>
+      <button class="modal-close" (click)="showInquiryPopup = false">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Inquiry No</th>
+            <th>Date</th>
+            <th>Items Count</th>
+            <th class="actions-column">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let iq of inquiries">
+            <td>{{ iq.no }}</td>
+            <td>{{ iq.date }}</td>
+            <td>
+              <span class="badge badge-count">{{ iq.items.length }} items</span>
+            </td>
+            <td class="actions-column">
+              <button class="btn btn-sm btn-primary" (click)="selectInquiry(iq)">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M11.667 7H2.333M7 2.333v9.334" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+                </svg>
+                Use This
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

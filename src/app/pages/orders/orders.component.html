@@ -1,0 +1,416 @@
+<div class="orders-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        {{ selectedFilter === 'previous' ? 'Completed Orders' : 'Orders Management' }}
+      </h1>
+      <p class="page-subtitle">Track and manage customer orders</p>
+    </div>
+    <button class="btn btn-primary" (click)="openAddModal()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      Add Order
+    </button>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-section">
+    <div class="filter-group">
+      <label class="filter-label">Filter Orders:</label>
+      <select class="filter-select" [(ngModel)]="selectedFilter">
+        <option value="offers">Offers Sent</option>
+        <option value="ongoing">Ongoing Orders</option>
+        <option value="previous">Completed Orders</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Order No</th>
+          <th>Order Date</th>
+          <th>Customer</th>
+          <th>Items</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of filteredOrders" class="table-row">
+          <!-- Order No -->
+          <td>
+            <span class="order-number">{{ order.orderNo }}</span>
+          </td>
+
+          <!-- Order Date -->
+          <td>
+            <div class="date-cell">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M12.667 2.667H3.333c-.733 0-1.333.6-1.333 1.333v9.333c0 .734.6 1.334 1.333 1.334h9.334c.733 0 1.333-.6 1.333-1.334V4c0-.733-.6-1.333-1.333-1.333zM2 6h12"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+              {{ order.orderDate }}
+            </div>
+          </td>
+
+          <!-- Customer -->
+          <td>
+            <div class="customer-name">{{ order.customerName }}</div>
+          </td>
+
+          <!-- Items -->
+          <td>
+            <div class="items-cell">
+              <div *ngFor="let it of order.items" class="item-line">
+                <span class="item-name">{{ it.productName }}</span>
+                <span class="item-qty">× {{ it.qty }}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Amount -->
+          <td>
+            <span class="amount">₹{{ order.totalAmount | number:'1.2-2' }}</span>
+          </td>
+
+          <!-- Status -->
+          <td>
+            <ng-container [ngSwitch]="selectedFilter">
+              <select *ngSwitchCase="'offers'" class="status-select" [value]="order.status"
+                (change)="updateStatus(order.id, $any($event.target).value)">
+                <option value="offers">Offers Sent</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="previous">Completed</option>
+              </select>
+
+              <select *ngSwitchCase="'ongoing'" class="status-select" [value]="order.status"
+                (change)="updateStatus(order.id, $any($event.target).value)">
+                <option value="ongoing">Ongoing</option>
+                <option value="previous">Completed</option>
+              </select>
+
+              <span *ngSwitchCase="'previous'" class="badge badge-completed">Completed</span>
+            </ng-container>
+          </td>
+
+          <!-- Actions -->
+          <td class="actions-column">
+            <div class="actions-dropdown">
+              <button class="btn-action-trigger" (click)="toggleActionMenu($event, order.id)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="3" r="1.5" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                  <circle cx="8" cy="13" r="1.5" fill="currentColor" />
+                </svg>
+              </button>
+              <div class="actions-menu" [class.active]="activeMenuId === order.id">
+                <button class="action-item" (click)="openDetailsModal(order); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M.667 8S3.333 2.667 8 2.667 15.333 8 15.333 8 12.667 13.333 8 13.333.667 8 .667 8z"
+                      stroke="currentColor" stroke-width="1.5" />
+                    <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  View Details
+                </button>
+                <button class="action-item" (click)="openEditModal(order); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.333 2A1.886 1.886 0 0114 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor"
+                      stroke-width="1.5" />
+                  </svg>
+                  Edit
+                </button>
+                <div class="action-divider"></div>
+                <button class="action-item action-delete" (click)="deleteOrder(order.id); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="!filteredOrders || filteredOrders.length === 0">
+          <td colspan="7" class="empty-state">
+            <div class="empty-state-content">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <path d="M38 10H10a2 2 0 00-2 2v24a2 2 0 002 2h28a2 2 0 002-2V12a2 2 0 00-2-2zM8 16h32"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              <p>No orders found</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD/EDIT ORDER MODAL -->
+<div *ngIf="showModal" class="modal-overlay" (click)="cancelModal()">
+  <div class="modal-content order-modal" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+            stroke="currentColor" stroke-width="2" />
+        </svg>
+        {{ isEditing ? 'Edit Order' : 'Add Order' }} – {{ orderForm.orderNo }}
+      </h2>
+      <button class="modal-close" (click)="cancelModal()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form class="order-form">
+
+      <!-- Order Information -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M15 15.75H3a1.5 1.5 0 01-1.5-1.5V3.75a1.5 1.5 0 011.5-1.5h12a1.5 1.5 0 011.5 1.5v10.5a1.5 1.5 0 01-1.5 1.5z"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Order Information
+        </h3>
+
+        <div class="form-group">
+          <label class="form-label">Select Inquiry</label>
+          <select class="form-select" (change)="onInquirySelect($event)">
+            <option value="">-- Select Inquiry --</option>
+            <option *ngFor="let inq of inquiriesList" [value]="inq.id">
+              Inquiry #{{ inq.no || inq.id }} |
+              {{ inq.date }} |
+              {{ inq.customerName }} |
+              {{
+              inq.items.length === 1
+              ? (inq.items[0].name + ' (' + inq.items[0].qty + ')')
+              : (inq.items.length + ' items')
+              }}
+            </option>
+          </select>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Order Date</label>
+            <input type="date" class="form-input" [(ngModel)]="orderForm.orderDate" name="orderDate" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Delivery Date</label>
+            <input type="date" class="form-input" [(ngModel)]="orderForm.deliveryDate" name="deliveryDate" />
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Customer</label>
+            <input type="text" class="form-input" [(ngModel)]="orderForm.customerName" name="customerName" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Salesman</label>
+            <input type="text" class="form-input" [(ngModel)]="orderForm.salesman" name="salesman" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M2.25 3.75h13.5M2.25 7.5h13.5M2.25 11.25h13.5M2.25 15h13.5" stroke="currentColor"
+              stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          Items
+        </h3>
+
+        <div class="items-table-wrapper">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th style="width: 120px;">Qty</th>
+                <th style="width: 140px;">Rate (₹)</th>
+                <th style="width: 140px;">Amount (₹)</th>
+                <th style="width: 50px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let it of orderForm.items; let i=index">
+                <td>
+                  <input type="text" class="table-input" [(ngModel)]="it.productName" [name]="'product-'+i"
+                    (input)="recalculateFormAmounts()" />
+                </td>
+                <td>
+                  <input type="number" class="table-input" [(ngModel)]="it.qty" [name]="'qty-'+i"
+                    (input)="recalculateFormAmounts()" />
+                </td>
+                <td>
+                  <input type="number" class="table-input" [(ngModel)]="it.rate" [name]="'rate-'+i"
+                    (input)="recalculateFormAmounts()" />
+                </td>
+                <td class="amount-cell">₹{{ it.amount | number:'1.2-2' }}</td>
+                <td>
+                  <button type="button" class="btn-remove-item" (click)="removeItemLine(i)">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="btn btn-add-item" (click)="addItemLine()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Add Item
+        </button>
+      </div>
+
+      <!-- Amount Details -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 1.5v15M13.5 4.5h-6a3 3 0 000 6h3a3 3 0 010 6h-6" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" />
+          </svg>
+          Amount Details
+        </h3>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Amount</label>
+            <input type="text" class="form-input readonly-field" [value]="orderForm.amount | number:'1.2-2'" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">GST %</label>
+            <input type="number" class="form-input" [(ngModel)]="orderForm.gstPercent" name="gstPercent"
+              (input)="recalculateFormAmounts()" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Total Amount</label>
+            <input type="text" class="form-input readonly-field" [value]="orderForm.totalAmount | number:'1.2-2'"
+              readonly />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Remarks</label>
+          <textarea class="form-textarea" rows="3" [(ngModel)]="orderForm.remarks" name="remarks"></textarea>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-cancel" (click)="cancelModal()">Cancel</button>
+        <button type="button" class="btn btn-save" (click)="submitForm()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M13.333 7.333v6a1.333 1.333 0 01-1.333 1.334H4a1.333 1.333 0 01-1.333-1.334v-9.333A1.333 1.333 0 014 2.667h5.333"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          {{ isEditing ? 'Save Changes' : 'Create Order' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- DETAILS MODAL -->
+<div *ngIf="showDetailsModal" class="modal-overlay" (click)="showDetailsModal = false">
+  <div class="modal-content details-modal" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" />
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+        </svg>
+        Order Details
+      </h2>
+      <button class="modal-close" (click)="showDetailsModal = false">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="view-content">
+      <!-- Basic Information -->
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Order No</span>
+          <span class="info-value">{{ detailsOrder?.orderNo }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Order Date</span>
+          <span class="info-value">{{ detailsOrder?.orderDate }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Customer</span>
+          <span class="info-value">{{ detailsOrder?.customerName }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Salesman</span>
+          <span class="info-value">{{ detailsOrder?.salesman }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Total Amount</span>
+          <span class="info-value">₹{{ detailsOrder?.totalAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Status</span>
+          <span class="info-value">
+            <span class="badge badge-completed">{{ detailsOrder?.status }}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="items-section">
+        <h3 class="section-title">Items</h3>
+        <div class="items-list">
+          <div *ngFor="let it of detailsOrder?.items" class="item-card-view">
+            <div class="item-info">
+              <span class="item-name-view">{{ it.productName }}</span>
+              <span class="item-qty-view">× {{ it.qty }}</span>
+            </div>
+            <span class="item-amount">₹{{ it.amount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="remarks-section" *ngIf="detailsOrder?.remarks">
+        <h3 class="section-title">Remarks</h3>
+        <p class="remarks-text">{{ detailsOrder?.remarks }}</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="showDetailsModal = false">Close</button>
+    </div>
+  </div>
+</div>

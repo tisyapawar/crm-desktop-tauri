@@ -1,0 +1,419 @@
+<div class="offers-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Offers Management</h1>
+      <p class="page-subtitle">Create and manage customer offers</p>
+    </div>
+    <button class="btn btn-primary" (click)="createOffer()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      New Offer
+    </button>
+  </div>
+
+  <!-- Table Container -->
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Offer ID</th>
+          <th>Offer Reference</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let o of offers" class="table-row">
+          <!-- Offer ID -->
+          <td>
+            <span class="offer-id">{{ o.id }}</span>
+          </td>
+
+          <!-- Offer Reference -->
+          <td>
+            <span class="offer-ref">{{ o.offerRef || ('NIEC/MDD/' + (o.id || '')) }}</span>
+          </td>
+
+          <!-- Customer -->
+          <td>
+            <div class="customer-name">{{ o.customerName }}</div>
+          </td>
+
+          <!-- Date -->
+          <td>
+            <div class="date-cell">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M12.667 2.667H3.333c-.733 0-1.333.6-1.333 1.333v9.333c0 .734.6 1.334 1.333 1.334h9.334c.733 0 1.333-.6 1.333-1.334V4c0-.733-.6-1.333-1.333-1.333zM2 6h12"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+              {{ o.date }}
+            </div>
+          </td>
+
+          <!-- Amount -->
+          <td>
+            <span class="amount">₹{{ o.grandTotal | number:'1.2-2' }}</span>
+          </td>
+
+          <!-- Actions -->
+          <td class="actions-column">
+            <div class="actions-dropdown">
+              <button class="btn-action-trigger" (click)="toggleActionMenu($event, o.id)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="3" r="1.5" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                  <circle cx="8" cy="13" r="1.5" fill="currentColor" />
+                </svg>
+              </button>
+              <div class="actions-menu" [class.active]="activeMenuId === o.id">
+                <button class="action-item" (click)="viewOffer(o); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M.667 8S3.333 2.667 8 2.667 15.333 8 15.333 8 12.667 13.333 8 13.333.667 8 .667 8z"
+                      stroke="currentColor" stroke-width="1.5" />
+                    <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  View Details
+                </button>
+                <button class="action-item" (click)="editOffer(o); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.333 2A1.886 1.886 0 0114 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor"
+                      stroke-width="1.5" />
+                  </svg>
+                  Edit
+                </button>
+                <div class="action-divider"></div>
+                <button class="action-item action-delete" (click)="deleteOffer(o.id); closeActionMenu()">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="!offers || offers.length === 0">
+          <td colspan="6" class="empty-state">
+            <div class="empty-state-content">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <path d="M40 18H8a2 2 0 00-2 2v20a2 2 0 002 2h32a2 2 0 002-2V20a2 2 0 00-2-2zM32 18V12a8 8 0 10-16 0v6"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <p>No offers found</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- VIEW OFFER MODAL -->
+<div *ngIf="showViewModal" class="modal-overlay" (click)="closeViewModal()">
+  <div class="modal-content view-modal" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+            stroke="currentColor" stroke-width="2" />
+        </svg>
+        Offer Preview
+      </h2>
+      <button class="modal-close" (click)="closeViewModal()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="view-content">
+      <!-- Offer Details -->
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Offer Reference</span>
+          <span class="info-value">{{ selectedOffer?.offerRef }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Customer</span>
+          <span class="info-value">{{ selectedOffer?.customerName }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Date</span>
+          <span class="info-value">{{ selectedOffer?.date }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Business Vertical</span>
+          <span class="info-value">{{ selectedOffer?.businessVertical || '-' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Payment Terms</span>
+          <span class="info-value">{{ selectedOffer?.paymentTerms || '-' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Validity</span>
+          <span class="info-value">{{ selectedOffer?.validity || '-' }}</span>
+        </div>
+      </div>
+
+      <!-- Items Section -->
+      <div class="items-section">
+        <h3 class="section-title">Items</h3>
+        <div class="items-table-wrapper" *ngIf="selectedOffer?.items?.length">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>HSN</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let it of selectedOffer.items">
+                <td>{{ it.name }}</td>
+                <td>{{ it.hsn }}</td>
+                <td>{{ it.qty }}</td>
+                <td>₹{{ it.rate | number:'1.2-2' }}</td>
+                <td>₹{{ it.total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="summary-section-view">
+        <div class="summary-row">
+          <span class="summary-label">Subtotal:</span>
+          <span class="summary-value">₹{{ selectedOffer?.subtotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">GST (18%):</span>
+          <span class="summary-value">₹{{ selectedOffer?.gst | number:'1.2-2' }}</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-row summary-total">
+          <span class="summary-label">Grand Total:</span>
+          <span class="summary-value">₹{{ selectedOffer?.grandTotal | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <!-- Terms -->
+      <div class="terms-section" *ngIf="selectedOffer?.terms">
+        <h3 class="section-title">Terms & Conditions</h3>
+        <p class="terms-text">{{ selectedOffer?.terms }}</p>
+      </div>
+
+      <!-- Notes -->
+      <div class="notes-section" *ngIf="selectedOffer?.notes">
+        <h3 class="section-title">Notes</h3>
+        <p class="notes-text">{{ selectedOffer?.notes }}</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeViewModal()">Close</button>
+      <button class="btn btn-primary" (click)="openOfferLetterModal()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M4.667 6.667L8 10m0 0l3.333-3.333M8 10V2"
+            stroke="currentColor" stroke-width="1.5" />
+        </svg>
+        Download Offer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- OFFER LETTER SPECIFICATION MODAL -->
+<div *ngIf="showPdfFormModal" class="modal-overlay" (click)="closeOfferLetterModal()">
+  <div class="modal-content pdf-form-modal" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            stroke="currentColor" stroke-width="2" />
+        </svg>
+        Offer Letter Specification
+      </h2>
+      <button class="modal-close" (click)="closeOfferLetterModal()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form class="pdf-form">
+      <div class="form-scroll-area">
+
+        <!-- Basic Information -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M15 15.75H3a1.5 1.5 0 01-1.5-1.5V3.75a1.5 1.5 0 011.5-1.5h12a1.5 1.5 0 011.5 1.5v10.5a1.5 1.5 0 01-1.5 1.5z"
+                stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            Basic Information
+          </h3>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label class="form-label">Date (DD/MM/YYYY)</label>
+              <input type="text" class="form-input readonly-field" [(ngModel)]="offerLetter['date']" name="date"
+                readonly />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Subject</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['subject']" name="subject" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Introduction Text</label>
+            <textarea class="form-textarea" [(ngModel)]="offerLetter['introText']" name="introText" rows="3"></textarea>
+          </div>
+        </div>
+
+        <!-- Product Specifications -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M15.75 11.25v3.75a1.5 1.5 0 01-1.5 1.5H3.75a1.5 1.5 0 01-1.5-1.5v-10.5a1.5 1.5 0 011.5-1.5h3.75"
+                stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            Product Specifications
+          </h3>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label class="form-label">Material</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['material']" name="material" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Density</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['density']" name="density" />
+            </div>
+          </div>
+
+          <div class="row-3">
+            <div class="form-group">
+              <label class="form-label">Thickness</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['thickness']" name="thickness" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Size</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['size']" name="size" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Quantity</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['quantity']" name="quantity" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Pricing & Terms -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M9 1.5v15M13.5 4.5h-6a3 3 0 000 6h3a3 3 0 010 6h-6" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" />
+            </svg>
+            Pricing & Terms
+          </h3>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label class="form-label">Rate</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['rate']" name="rate" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Taxes</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['taxes']" name="taxes" />
+            </div>
+          </div>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label class="form-label">Freight</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['freight']" name="freight" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Delivery Terms</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['deliveryTerms']" name="deliveryTerms" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Details -->
+        <div class="section-card">
+          <h3 class="section-header">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M13.5 1.5H4.5A1.5 1.5 0 003 3v12a1.5 1.5 0 001.5 1.5h9a1.5 1.5 0 001.5-1.5V3a1.5 1.5 0 00-1.5-1.5z"
+                stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            Additional Details
+          </h3>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label class="form-label">Inspection</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['inspection']" name="inspection" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Packing</label>
+              <input type="text" class="form-input" [(ngModel)]="offerLetter['packing']" name="packing" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Loading</label>
+            <input type="text" class="form-input" [(ngModel)]="offerLetter['loading']" name="loading" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Closing Text</label>
+            <textarea class="form-textarea" [(ngModel)]="offerLetter['closingText']" name="closingText"
+              rows="3"></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-cancel" (click)="closeOfferLetterModal()">Cancel</button>
+        <button type="button" class="btn btn-save" (click)="downloadOfferPDF()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M4.667 6.667L8 10m0 0l3.333-3.333M8 10V2"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Download PDF
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

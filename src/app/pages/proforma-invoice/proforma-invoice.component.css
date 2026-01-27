@@ -1,0 +1,868 @@
+/* ===================================
+   PROFORMA INVOICE COMPONENT - MODERN UI
+   =================================== */
+
+/* Container */
+.proforma-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  padding: 40px;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  animation: fadeInDown 0.6s ease-out;
+}
+
+.header-content {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #001F3F 0%, #0a4d8c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: #64748b;
+  font-weight: 400;
+}
+
+/* Invoice Wrapper */
+.invoice-wrapper {
+  max-width: 900px;
+  margin: 0 auto 40px auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.invoice-page {
+  background: white;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  border: 2px solid #000;
+  box-sizing: border-box;
+}
+
+/* ===================================
+   INVOICE HEADER
+   =================================== */
+
+.inv-header {
+  text-align: center;
+  padding: 15px;
+  border-bottom: 2px solid #000;
+  background: white;
+}
+
+.inv-logo {
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.inv-title {
+  color: #d32f2f;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.inv-sub {
+  font-size: 9px;
+  margin: 5px 0;
+  color: #333;
+}
+
+/* ===================================
+   COMPANY INFO
+   =================================== */
+
+.company-info {
+  padding: 15px;
+  text-align: center;
+  border-bottom: 2px solid #000;
+  background: white;
+}
+
+.company-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+  color: #000;
+}
+
+.company-details {
+  font-size: 10px;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* ===================================
+   INFO TABLE (BUYER + PROFORMA)
+   =================================== */
+
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.info-table td {
+  padding: 12px;
+  vertical-align: top;
+  border: 1px solid #000;
+}
+
+.buyer-box,
+.proforma-box {
+  line-height: 1.6;
+}
+
+.field-row {
+  margin-bottom: 8px;
+}
+
+.field-row:last-child {
+  margin-bottom: 0;
+}
+
+.field-row strong {
+  font-size: 10px;
+  display: inline-block;
+  margin-right: 5px;
+  color: #000;
+}
+
+.print-value {
+  display: inline-block;
+  min-height: 16px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #333;
+}
+
+/* ===================================
+   ITEMS TABLE
+   =================================== */
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-bottom: 2px solid #000;
+}
+
+.items-table thead {
+  background: #fff;
+}
+
+.items-table th {
+  padding: 8px 5px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 10px;
+  border: 1px solid #000;
+  border-bottom: 2px solid #000;
+  color: #000;
+}
+
+.items-table tbody tr {
+  border-bottom: 1px solid #000;
+}
+
+.items-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.items-table tbody td {
+  padding: 8px 5px;
+  border-left: 1px solid #000;
+  border-right: 1px solid #000;
+  border-top: none;
+  border-bottom: none;
+  font-size: 10px;
+  min-height: 30px;
+  color: #333;
+}
+
+.items-table tbody td:first-child {
+  border-left: 1px solid #000;
+}
+
+.items-table tbody td:last-child {
+  border-right: 1px solid #000;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+  padding-right: 8px !important;
+}
+
+/* ===================================
+   MIDDLE SECTION (PAYMENT + TOTALS)
+   =================================== */
+
+.middle-section {
+  display: flex;
+  border-bottom: 2px solid #000;
+}
+
+.left-middle {
+  width: 60%;
+  padding: 12px;
+  border-right: 2px solid #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.payment-terms-box {
+  flex: 1;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.gst-amount-box {
+  padding-top: 15px;
+  font-size: 10px;
+}
+
+.gst-pan-row {
+  margin: 5px 0;
+  color: #000;
+}
+
+.amount-words-row {
+  margin: 10px 0 5px 0;
+  font-style: italic;
+  color: #333;
+}
+
+.right-middle {
+  width: 40%;
+  padding: 12px;
+}
+
+.totals-summary {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.totals-summary td {
+  padding: 4px 8px;
+  font-size: 10px;
+  color: #333;
+}
+
+.totals-summary .right-col {
+  text-align: right;
+  min-width: 100px;
+}
+
+/* ===================================
+   BANK DETAILS SECTION
+   =================================== */
+
+.bank-section {
+  border-bottom: 2px solid #000;
+}
+
+.bank-content {
+  display: flex;
+}
+
+.bank-left {
+  width: 60%;
+  padding: 12px;
+  border-right: 2px solid #000;
+}
+
+.bank-title {
+  margin-bottom: 10px;
+  font-size: 10px;
+  color: #000;
+  font-weight: bold;
+}
+
+.bank-right {
+  width: 40%;
+  padding: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bank-row {
+  margin: 5px 0;
+  font-size: 10px;
+  color: #d32f2f;
+}
+
+.bank-label {
+  color: #d32f2f;
+  font-weight: bold;
+  display: inline-block;
+  min-width: 120px;
+}
+
+.signature-line {
+  border-top: 1px solid #000;
+  padding-top: 5px;
+  display: inline-block;
+  min-width: 200px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.bank-placeholder {
+  padding: 20px;
+  color: #999;
+  text-align: center;
+  font-style: italic;
+  font-size: 11px;
+}
+
+/* ===================================
+   BOTTOM SECTION (TERMS + SIGNATURES)
+   =================================== */
+
+.bottom-section {
+  display: flex;
+  border-bottom: 2px solid #000;
+}
+
+.terms-section {
+  width: 60%;
+  padding: 12px;
+  border-right: 2px solid #000;
+  font-size: 9px;
+}
+
+.terms-section strong {
+  color: #000;
+}
+
+.terms-section ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.terms-section li {
+  margin: 5px 0;
+  line-height: 1.5;
+  color: #333;
+}
+
+.signatures-section {
+  width: 40%;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.sig-field {
+  margin: 10px 0;
+  font-size: 10px;
+  color: #333;
+}
+
+/* ===================================
+   FOOTER
+   =================================== */
+
+.inv-footer {
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: bold;
+  color: #000;
+  background: white;
+}
+
+/* ===================================
+   INPUT FIELDS
+   =================================== */
+
+.inv-input {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+  font-size: 10px;
+  font-family: Arial, sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.inv-input:focus {
+  outline: none;
+  border-color: #001F3F;
+  box-shadow: 0 0 0 2px rgba(0, 31, 63, 0.1);
+}
+
+.small-input {
+  width: auto;
+  min-width: 100px;
+}
+
+.right-input {
+  text-align: right;
+}
+
+.buyer-addr-input {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.bank-select {
+  width: 100%;
+  padding: 6px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+/* ===================================
+   PRINT MODE
+   =================================== */
+
+.invoice-wrapper.print-mode .inv-input,
+.invoice-wrapper.print-mode select,
+.invoice-wrapper.print-mode textarea {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+
+/* ===================================
+   CONTROL BUTTONS
+   =================================== */
+
+.controls {
+  max-width: 900px;
+  margin: 0 auto 40px auto;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeInUp 1s ease-out;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #001F3F 0%, #0a4d8c 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 31, 63, 0.2);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #003366 0%, #0d5aa7 100%);
+  box-shadow: 0 6px 16px rgba(0, 31, 63, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: #edf2f7;
+  color: #2d3748;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+}
+
+.btn-save:hover {
+  background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+  box-shadow: 0 6px 16px rgba(72, 187, 120, 0.3);
+  transform: translateY(-2px);
+}
+
+/* ===================================
+   SAVED PROFORMA LIST
+   =================================== */
+
+.saved-list {
+  max-width: 900px;
+  margin: 0 auto;
+  animation: fadeInUp 1.2s ease-out;
+}
+
+.list-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Table Container */
+.table-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead {
+  background: linear-gradient(135deg, #001F3F 0%, #0a4d8c 100%);
+}
+
+.data-table th {
+  padding: 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.data-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: #1a202c;
+  vertical-align: middle;
+}
+
+/* Table Cells */
+.proforma-ref {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #001F3F;
+}
+
+.buyer-name {
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.amount {
+  font-weight: 700;
+  font-size: 15px;
+  color: #001F3F;
+}
+
+/* Table Action Buttons */
+.actions-column-table {
+  width: 280px;
+}
+
+.btn-table {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 8px;
+}
+
+.btn-edit {
+  background: #001F3F;
+  color: white;
+  margin: 2px;
+}
+
+.btn-edit:hover {
+  background: #003366;
+  transform: translateY(-1px);
+}
+
+.btn-download {
+  background: #4299e1;
+  color: white;
+  margin: 2px;
+}
+
+.btn-download:hover {
+  background: #3182ce;
+  transform: translateY(-1px);
+}
+
+.btn-delete {
+  background: #e53e3e;
+  color: white;
+  margin: 2px;
+}
+
+.btn-delete:hover {
+  background: #c53030;
+  transform: translateY(-1px);
+}
+
+/* ===================================
+   ANIMATIONS
+   =================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===================================
+   PRINT STYLES
+   =================================== */
+
+@media print {
+  .proforma-container {
+    padding: 0;
+    background: white;
+  }
+
+  .page-header,
+  .controls,
+  .saved-list {
+    display: none !important;
+  }
+
+  .invoice-wrapper {
+    max-width: 100%;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .invoice-page {
+    border: 2px solid #000;
+  }
+
+  .inv-input,
+  select,
+  textarea {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure proper page breaks */
+  .invoice-page {
+    page-break-inside: avoid;
+  }
+
+  .items-table {
+    page-break-inside: auto;
+  }
+
+  .items-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  .middle-section,
+  .bank-section,
+  .bottom-section {
+    page-break-inside: avoid;
+  }
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+@media (max-width: 1024px) {
+  .proforma-container {
+    padding: 24px;
+  }
+
+  .invoice-wrapper {
+    max-width: 100%;
+  }
+
+  .controls {
+    max-width: 100%;
+  }
+
+  .saved-list {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .proforma-container {
+    padding: 16px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .controls {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    min-width: 800px;
+  }
+
+  /* Stack invoice sections on mobile for better readability */
+  .middle-section,
+  .bank-content,
+  .bottom-section {
+    flex-direction: column;
+  }
+
+  .left-middle,
+  .right-middle,
+  .bank-left,
+  .bank-right,
+  .terms-section,
+  .signatures-section {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #000;
+  }
+
+  .left-middle:last-child,
+  .right-middle:last-child,
+  .bank-left:last-child,
+  .bank-right:last-child,
+  .terms-section:last-child,
+  .signatures-section:last-child {
+    border-bottom: none;
+  }
+}
+
+/* ===================================
+   SCROLLBAR STYLING
+   =================================== */
+
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f7fafc;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* ===================================
+   ADDITIONAL REFINEMENTS
+   =================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: #a0aec0;
+}
+
+/* Ensure inputs don't have autofill background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px white inset;
+  box-shadow: 0 0 0 1000px white inset;
+}

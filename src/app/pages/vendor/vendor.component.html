@@ -1,0 +1,463 @@
+<div class="vendors-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Vendor Management</h1>
+      <p class="page-subtitle">Manage and track all your vendor information</p>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <div class="search-wrapper">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM19 19l-4.35-4.35" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <input type="text" [(ngModel)]="searchTerm" (input)="filterVendors()"
+        placeholder="Search by name, email, GST, PAN, MSME..." class="search-input" />
+    </div>
+
+    <div class="action-buttons">
+      <button (click)="openAddModal()" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        Add Vendor
+      </button>
+
+      <input type="file" hidden #excelInput (change)="handleExcel($event)">
+      <button (click)="excelInput.click()" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2M8 2L4.667 5.333M8 2v8"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Upload Excel
+      </button>
+
+      <button (click)="downloadExcel()" class="btn btn-success">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M4.667 6.667L8 10M8 10l3.333-3.333M8 10V2"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Download Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Vendor ID</th>
+          <th>Vertical</th>
+          <th>Company Details</th>
+          <th>Contact</th>
+          <th>Tax Documents</th>
+          <th>Business Info</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let vendor of filteredVendors; let i = index" class="table-row">
+          <!-- Vendor ID -->
+          <td>
+            <span class="vendor-id">{{ vendor.vendorId }}</span>
+          </td>
+
+          <!-- Vertical -->
+          <td>
+            <span class="badge badge-vertical">{{ vendor.vendorVertical || '-' }}</span>
+          </td>
+
+          <!-- Company Details -->
+          <td>
+            <div class="company-info">
+              <div class="company-name">{{ vendor.companyName }}</div>
+              <div class="company-meta">
+                <span class="meta-item">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4.667h12M2 8h12M2 11.333h12" stroke="currentColor" stroke-width="1.5"
+                      stroke-linecap="round" />
+                  </svg>
+                  {{ vendor.category }}
+                </span>
+                <span class="meta-item" *ngIf="vendor.brandName">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M13.333 6.667L8 1.333 2.667 6.667v6.666a1.333 1.333 0 001.333 1.334h8a1.333 1.333 0 001.333-1.334V6.667z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  {{ vendor.brandName }}
+                </span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Contact -->
+          <td>
+            <div class="contact-info">
+              <div class="contact-person">{{ vendor.contactPerson }}</div>
+              <div class="contact-item">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M14.667 11.28v2a1.333 1.333 0 01-1.454 1.333 13.2 13.2 0 01-5.753-2.046 13 13 0 01-4-4 13.2 13.2 0 01-2.047-5.78A1.333 1.333 0 012.74 1.333h2a1.333 1.333 0 011.333 1.147c.084.64.24 1.267.467 1.867a1.333 1.333 0 01-.3 1.406L5.333 6.667a10.667 10.667 0 004 4l.914-.914a1.333 1.333 0 011.406-.3c.6.226 1.227.383 1.867.467a1.333 1.333 0 011.147 1.36z"
+                    stroke="currentColor" stroke-width="1.5" />
+                </svg>
+                {{ vendor.mobile }}
+              </div>
+              <div class="contact-item">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M2.667 2.667h10.666c.734 0 1.334.6 1.334 1.333v8c0 .733-.6 1.333-1.334 1.333H2.667c-.734 0-1.334-.6-1.334-1.333V4c0-.733.6-1.333 1.334-1.333z"
+                    stroke="currentColor" stroke-width="1.5" />
+                  <path d="M14.667 4L8 8.667 1.333 4" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+                {{ vendor.email }}
+              </div>
+            </div>
+          </td>
+
+          <!-- Tax Documents -->
+          <td>
+            <div class="documents-cell">
+              <!-- GST -->
+              <div class="doc-row">
+                <span class="doc-label">GST:</span>
+                <span class="doc-value">{{ vendor.gst || '-' }}</span>
+                <a *ngIf="vendor.gstFile" [href]="vendor.gstFile.data" target="_blank" [download]="vendor.gstFile.name"
+                  class="doc-link">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M9.333 1.333H4A1.333 1.333 0 002.667 2.667v10.666A1.333 1.333 0 004 14.667h8a1.333 1.333 0 001.333-1.334V5.333L9.333 1.333z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  View
+                </a>
+                <label class="file-upload-label">
+                  <input type="file" (change)="onGstFileSelectFromTable($event, vendor)" class="file-input" />
+                  Upload
+                </label>
+              </div>
+
+              <!-- PAN -->
+              <div class="doc-row">
+                <span class="doc-label">PAN:</span>
+                <span class="doc-value">{{ vendor.pan || '-' }}</span>
+                <a *ngIf="vendor.panFile" [href]="vendor.panFile.data" target="_blank" [download]="vendor.panFile.name"
+                  class="doc-link">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M9.333 1.333H4A1.333 1.333 0 002.667 2.667v10.666A1.333 1.333 0 004 14.667h8a1.333 1.333 0 001.333-1.334V5.333L9.333 1.333z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  View
+                </a>
+                <label class="file-upload-label">
+                  <input type="file" (change)="onPanFileSelectFromTable($event, vendor)" class="file-input" />
+                  Upload
+                </label>
+              </div>
+
+              <!-- MSME -->
+              <div class="doc-row">
+                <span class="doc-label">MSME:</span>
+                <span class="doc-value">{{ vendor.msme || '-' }}</span>
+                <a *ngIf="vendor.msmeFile" [href]="vendor.msmeFile.data" target="_blank"
+                  [download]="vendor.msmeFile.name" class="doc-link">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M9.333 1.333H4A1.333 1.333 0 002.667 2.667v10.666A1.333 1.333 0 004 14.667h8a1.333 1.333 0 001.333-1.334V5.333L9.333 1.333z"
+                      stroke="currentColor" stroke-width="1.5" />
+                  </svg>
+                  View
+                </a>
+                <label class="file-upload-label">
+                  <input type="file" (change)="onMsmeFileSelectFromTable($event, vendor)" class="file-input" />
+                  Upload
+                </label>
+              </div>
+            </div>
+          </td>
+
+          <!-- Business Info -->
+          <td>
+            <div class="business-info">
+              <div class="info-item">
+                <span class="info-label">Payment:</span>
+                <span class="info-value">{{ vendor.paymentTerms }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Product:</span>
+                <span class="info-value">{{ vendor.product }}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Actions -->
+          <td class="actions-column">
+            <div class="action-buttons-group">
+              <button (click)="openEditModal(i)" class="btn-icon btn-edit" title="Edit">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M11.333 2A1.886 1.886 0 0114 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor"
+                    stroke-width="1.5" />
+                </svg>
+              </button>
+              <button (click)="deleteVendor(i)" class="btn-icon btn-delete" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z"
+                    stroke="currentColor" stroke-width="1.5" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="filteredVendors.length === 0">
+          <td colspan="7" class="empty-state">
+            <div class="empty-state-content">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <path d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4 4 12.954 4 24s8.954 20 20 20z"
+                  stroke="currentColor" stroke-width="2" />
+                <path d="M24 16v12M24 32h.02" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              <p>No vendors found</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="showModal" class="modal-overlay" (click)="cancelModal()">
+  <div class="modal-content vendor-modal" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+          <path
+            d="M20 7h-4V5a3 3 0 00-3-3h-2a3 3 0 00-3 3v2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zm-6 0h-4V5a1 1 0 011-1h2a1 1 0 011 1v2z"
+            fill="currentColor" />
+        </svg>
+        {{ isEditing ? 'Edit Vendor' : 'Add New Vendor' }}
+      </h2>
+      <button class="modal-close" (click)="cancelModal()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitForm()" onsubmit="return false;" class="vendor-form">
+
+      <!-- BASIC INFO -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M15 15.75H3a1.5 1.5 0 01-1.5-1.5V3.75a1.5 1.5 0 011.5-1.5h12a1.5 1.5 0 011.5 1.5v10.5a1.5 1.5 0 01-1.5 1.5z"
+              stroke="currentColor" stroke-width="1.5" />
+            <path d="M6 6.75h6M6 9.75h6M6 12.75h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          Basic Information
+        </h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Vendor ID</label>
+            <input type="text" class="form-input readonly-field" [(ngModel)]="newVendor.vendorId" name="vendorId"
+              readonly />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Vendor Type</label>
+            <input type="text" class="form-input" [(ngModel)]="newVendor.vendorType" name="vendorType" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Vendor Vertical</label>
+          <select class="form-select" [(ngModel)]="newVendor.vendorVertical" name="vendorVertical">
+            <option value="" disabled selected>Select Vertical</option>
+            <option value="Projects">Projects</option>
+            <option value="Material Distribution Division">Material Distribution Division</option>
+            <option value="Both">Both</option>
+          </select>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Company Name</label>
+            <input type="text" class="form-input" [(ngModel)]="newVendor.companyName" name="companyName" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Brand Name</label>
+            <input type="text" class="form-input" [(ngModel)]="newVendor.brandName" name="brandName" />
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <input type="text" class="form-input" [(ngModel)]="newVendor.category" name="category" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Product</label>
+            <input type="text" class="form-input" [(ngModel)]="newVendor.product" name="product" />
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTACT INFO -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M15.75 12.66v2.25a1.5 1.5 0 01-1.635 1.5 14.85 14.85 0 01-6.465-2.3 14.625 14.625 0 01-4.5-4.5 14.85 14.85 0 01-2.3-6.495A1.5 1.5 0 012.34 1.5h2.25a1.5 1.5 0 011.5 1.29c.095.72.27 1.425.525 2.1a1.5 1.5 0 01-.338 1.58l-.975.975a12 12 0 004.5 4.5l.975-.975a1.5 1.5 0 011.58-.338c.675.255 1.38.43 2.1.525a1.5 1.5 0 011.293 1.523z"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Contact Information
+        </h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Contact Person</label>
+            <input type="text" class="form-input" [(ngModel)]="newVendor.contactPerson" name="contactPerson" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Mobile</label>
+            <input type="text" class="form-input" [(ngModel)]="newVendor.mobile" name="mobile" />
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" [(ngModel)]="newVendor.email" name="email" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Website</label>
+            <input type="text" class="form-input" [(ngModel)]="newVendor.website" name="website"
+              placeholder="https://example.com" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <textarea class="form-textarea" [(ngModel)]="newVendor.address" name="address" rows="2"
+            placeholder="Enter complete address..."></textarea>
+        </div>
+      </div>
+
+      <!-- TAX DOCUMENTS -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M10.5 1.5H4.5A1.5 1.5 0 003 3v12a1.5 1.5 0 001.5 1.5h9A1.5 1.5 0 0015 15V6L10.5 1.5z"
+              stroke="currentColor" stroke-width="1.5" />
+            <path d="M10.5 1.5V6H15" stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Tax Documents
+        </h3>
+
+        <!-- GST -->
+        <div class="form-group">
+          <label class="form-label">GST Number</label>
+          <input type="text" class="form-input" [(ngModel)]="newVendor.gst" name="gst" />
+          <label class="file-upload-btn">
+            <input type="file" (change)="onGstFileSelect($event)" />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2M8 2L4.667 5.333M8 2v8"
+                stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            Upload GST Certificate
+          </label>
+          <small *ngIf="newVendor.gstFile" class="file-name">
+            📎 {{ newVendor.gstFile.name }}
+          </small>
+        </div>
+
+        <!-- PAN -->
+        <div class="form-group">
+          <label class="form-label">PAN Number</label>
+          <input type="text" class="form-input" [(ngModel)]="newVendor.pan" name="pan" />
+          <label class="file-upload-btn">
+            <input type="file" (change)="onPanFileSelect($event)" />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2M8 2L4.667 5.333M8 2v8"
+                stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            Upload PAN Document
+          </label>
+          <small *ngIf="newVendor.panFile" class="file-name">
+            📎 {{ newVendor.panFile.name }}
+          </small>
+        </div>
+
+        <!-- MSME -->
+        <div class="form-group">
+          <label class="form-label">MSME Number</label>
+          <input type="text" class="form-input" [(ngModel)]="newVendor.msme" name="msme" />
+          <label class="file-upload-btn">
+            <input type="file" (change)="onMsmeFileSelect($event)" />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10M11.333 5.333L8 2M8 2L4.667 5.333M8 2v8"
+                stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            Upload MSME Certificate
+          </label>
+          <small *ngIf="newVendor.msmeFile" class="file-name">
+            📎 {{ newVendor.msmeFile.name }}
+          </small>
+        </div>
+      </div>
+
+      <!-- BUSINESS TERMS -->
+      <div class="section-card">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M14.55 11.25a1.2 1.2 0 00.24 1.32l.045.045a1.454 1.454 0 11-2.055 2.055l-.045-.045a1.2 1.2 0 00-1.32-.24 1.2 1.2 0 00-.72 1.095v.27a1.455 1.455 0 01-2.91 0v-.143a1.2 1.2 0 00-.785-1.095 1.2 1.2 0 00-1.32.24l-.045.045a1.454 1.454 0 11-2.055-2.055l.045-.045a1.2 1.2 0 00.24-1.32 1.2 1.2 0 00-1.095-.72h-.27a1.455 1.455 0 010-2.91h.143a1.2 1.2 0 001.095-.785 1.2 1.2 0 00-.24-1.32l-.045-.045a1.454 1.454 0 112.055-2.055l.045.045a1.2 1.2 0 001.32.24h.06a1.2 1.2 0 00.72-1.095v-.27a1.455 1.455 0 012.91 0v.143a1.2 1.2 0 00.72 1.095 1.2 1.2 0 001.32-.24l.045-.045a1.454 1.454 0 112.055 2.055l-.045.045a1.2 1.2 0 00-.24 1.32v.06a1.2 1.2 0 001.095.72h.27a1.455 1.455 0 010 2.91h-.143a1.2 1.2 0 00-1.095.72z"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Business Terms
+        </h3>
+
+        <div class="form-group">
+          <label class="form-label">Payment Terms</label>
+          <input type="text" class="form-input" [(ngModel)]="newVendor.paymentTerms" name="paymentTerms"
+            placeholder="e.g., Net 30, Net 60, COD" />
+        </div>
+      </div>
+
+      <!-- BUTTONS -->
+      <div class="modal-footer">
+        <button type="button" (click)="cancelModal()" class="btn btn-cancel">Cancel</button>
+        <button type="submit" class="btn btn-save">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M13.333 7.333v6a1.333 1.333 0 01-1.333 1.334H4a1.333 1.333 0 01-1.333-1.334v-9.333A1.333 1.333 0 014 2.667h5.333M13.333 7.333L10 4m3.333 3.333L10 4m3.333 3.333L10 4m0 0V2.667m0 1.333v6"
+              stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          {{ isEditing ? 'Update Vendor' : 'Save Vendor' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
