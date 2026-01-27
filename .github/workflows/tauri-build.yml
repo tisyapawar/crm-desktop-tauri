@@ -35,33 +35,29 @@ jobs:
       # ----------------------------------------
       # Checkout
       # ----------------------------------------
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       # ----------------------------------------
-      # Node (Angular)
+      # Node
       # ----------------------------------------
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Install frontend dependencies
-        run: npm ci
+      - run: npm ci
 
       # ----------------------------------------
       # Rust
       # ----------------------------------------
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           targets: |
             x86_64-apple-darwin
             aarch64-apple-darwin
 
       # ----------------------------------------
-      # Linux system dependencies
+      # Linux deps
       # ----------------------------------------
       - name: Install Linux dependencies
         if: matrix.platform == 'linux'
@@ -74,7 +70,7 @@ jobs:
             librsvg2-dev
 
       # ----------------------------------------
-      # Build (Tauri v2)
+      # Build
       # ----------------------------------------
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -82,3 +78,18 @@ jobs:
           args: ${{ matrix.tauri_args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ----------------------------------------
+      # Upload artifacts (THIS IS WHAT YOU WERE MISSING)
+      # ----------------------------------------
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-${{ matrix.platform }}
+          path: |
+            target/release/bundle/**/*.AppImage
+            target/release/bundle/**/*.deb
+            target/release/bundle/**/*.rpm
+            target/release/bundle/**/*.msi
+            target/release/bundle/**/*.exe
+            target/release/bundle/**/*.dmg
