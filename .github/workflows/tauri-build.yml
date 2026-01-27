@@ -1,4 +1,4 @@
-name: Tauri Build
+name: Build Tauri App
 
 on:
   push:
@@ -19,25 +19,29 @@ jobs:
           # ---------- Linux ----------
           - os: ubuntu-22.04
             platform: linux
-            args: ""
+            tauri_args: ""
 
           # ---------- Windows ----------
           - os: windows-latest
             platform: windows
-            args: ""
+            tauri_args: ""
 
-          # ---------- macOS Universal ----------
+          # ---------- macOS (Universal) ----------
           - os: macos-latest
             platform: macos
-            args: "--target universal-apple-darwin"
+            tauri_args: "--target universal-apple-darwin"
 
     steps:
-      # ---- Checkout ----
+      # ----------------------------------------
+      # Checkout
+      # ----------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ---- Node (Angular build) ----
-      - name: Setup Node
+      # ----------------------------------------
+      # Node (Angular)
+      # ----------------------------------------
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -46,7 +50,9 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      # ---- Rust ----
+      # ----------------------------------------
+      # Rust
+      # ----------------------------------------
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -54,7 +60,9 @@ jobs:
             x86_64-apple-darwin
             aarch64-apple-darwin
 
-      # ---- Linux system deps ----
+      # ----------------------------------------
+      # Linux system dependencies
+      # ----------------------------------------
       - name: Install Linux dependencies
         if: matrix.platform == 'linux'
         run: |
@@ -65,18 +73,12 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev
 
-      # ---- Build ----
+      # ----------------------------------------
+      # Build (Tauri v2)
+      # ----------------------------------------
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         with:
-          args: ${{ matrix.args }}
+          args: ${{ matrix.tauri_args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # ---- Upload artifacts ----
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: tauri-${{ matrix.platform }}
-          path: |
-            src-tauri/target/release/bundle/**
