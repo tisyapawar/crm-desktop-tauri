@@ -205,11 +205,20 @@
 
               <div class="form-group">
                 <label class="form-label">Customer <span class="required">*</span></label>
-                <select class="form-select" [(ngModel)]="selectedCustomer" name="billToCustomer"
+                <!-- <select class="form-select" [(ngModel)]="selectedCustomer" name="billToCustomer"
                   (ngModelChange)="onInvoiceCustomerChange()">
                   <option [ngValue]="null">Select Customer</option>
                   <option *ngFor="let c of customers" [ngValue]="c">{{ c.name }}</option>
+                </select> -->
+                <select class="form-select" [(ngModel)]="selectedCompany" name="billToCompany"
+                  (ngModelChange)="onCompanyChange()">
+
+                  <option [ngValue]="null">Select Company</option>
+                  <option *ngFor="let c of customers" [ngValue]="c.companyName">
+                    {{ c.companyName }}
+                  </option>
                 </select>
+
               </div>
 
               <div class="form-group">
@@ -549,18 +558,240 @@
       </button>
     </div>
 
-    <div class="grr-form">
-      <!-- Continue with GRR form fields... -->
-      <!-- I'll provide the complete GRR form in the next message due to length -->
-    </div>
+    <!-- <div class="grr-form">
+      <div class="modal-box large">
+        <h3>Goods Receipt Report (GRR)</h3>
 
-    <div class="modal-footer">
-      <button class="btn btn-cancel" (click)="closeGRRModal()">Cancel</button>
-      <button class="btn btn-save" (click)="generateGRR()">Generate GRR</button>
+        <label>Vendor Name:</label>
+        <input type="text" [(ngModel)]="grrForm.vendorName">
+
+        <label>Report No:</label>
+        <input type="text" [(ngModel)]="grrForm.reportNo">
+
+        <label>Date:</label>
+        <input type="date" [(ngModel)]="grrForm.date">
+
+        <label>PO No & Date:</label>
+        <input type="text" [(ngModel)]="grrForm.poNoDate">
+
+        <label>Material Received On:</label>
+        <input type="date" [(ngModel)]="grrForm.receivedOn">
+
+        <label>Material Description:</label>
+        <textarea [(ngModel)]="grrForm.materialDesc"></textarea>
+
+        <label>Tax Invoice / Delivery Challan No:</label>
+        <input type="text" [(ngModel)]="grrForm.challanNo">
+
+        <label>Qty as per Invoice:</label>
+        <input type="text" [(ngModel)]="grrForm.qtyInvoice">
+
+        <label>Actual Qty Received:</label>
+        <input type="text" [(ngModel)]="grrForm.qtyReceived">
+
+        <h4>Warehouse Checks</h4>
+        <label>Weighing Slip:</label>
+        <select [(ngModel)]="grrForm.weighingSlip">
+          <option>Yes</option>
+          <option>No</option>
+          <option>N/A</option>
+        </select>
+
+        <label>Material Acceptable?</label>
+        <select [(ngModel)]="grrForm.materialOk">
+          <option>Yes</option>
+          <option>No</option>
+          <option>N/A</option>
+        </select>
+
+        <label>Physical Damage Acceptable?</label>
+        <select [(ngModel)]="grrForm.damageOk">
+          <option>Yes</option>
+          <option>No</option>
+          <option>N/A</option>
+        </select>
+
+        <h4>Office Checks</h4>
+        <label>Material Test Certificate:</label>
+        <select [(ngModel)]="grrForm.mtcAvailable">
+          <option>Yes</option>
+          <option>No</option>
+          <option>N/A</option>
+        </select>
+
+        <label>Transporter Name:</label>
+        <input type="text" [(ngModel)]="grrForm.transporter">
+
+        <label>LR No / Vehicle No:</label>
+        <input type="text" [(ngModel)]="grrForm.lrNo">
+
+        <label>Approved for Invoice Booking:</label>
+        <select [(ngModel)]="grrForm.approved">
+          <option>Yes</option>
+          <option>No</option>
+          <option>N/A</option>
+        </select>
+
+        <label>Remarks:</label>
+        <textarea [(ngModel)]="grrForm.remarks"></textarea>
+
+        <label>Prepared By:</label>
+        <input type="text" [(ngModel)]="grrForm.preparedBy">
+
+        <label>Checked By:</label>
+        <input type="text" [(ngModel)]="grrForm.checkedBy">
+
+        <label>Approved By:</label>
+        <input type="text" [(ngModel)]="grrForm.approvedBy">
+
+
+        <div class="modal-footer">
+          <button class="btn btn-cancel" (click)="closeGRRModal()">Cancel</button>
+          <button class="btn btn-save" (click)="generateGRR()">Generate GRR</button>
+        </div>
+
+      </div>
+    </div> -->
+
+
+    <div class="grr-form">
+
+      <!-- BASIC DETAILS -->
+      <div class="section-card">
+        <h3 class="section-header">Basic Details</h3>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Vendor Name</label>
+            <input class="form-input" [(ngModel)]="grrForm.vendorName">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Report No</label>
+            <input class="form-input" [(ngModel)]="grrForm.reportNo">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" [(ngModel)]="grrForm.date">
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">PO No & Date</label>
+            <input class="form-input" [(ngModel)]="grrForm.poNoDate">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Material Received On</label>
+            <input type="date" class="form-input" [(ngModel)]="grrForm.receivedOn">
+          </div>
+        </div>
+      </div>
+
+      <!-- MATERIAL DETAILS -->
+      <div class="section-card">
+        <h3 class="section-header">Material Details</h3>
+
+        <div class="form-group">
+          <label class="form-label">Material Description</label>
+          <textarea class="form-textarea" rows="3" [(ngModel)]="grrForm.materialDesc"></textarea>
+        </div>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Challan No</label>
+            <input class="form-input" [(ngModel)]="grrForm.challanNo">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Qty as per Invoice</label>
+            <input type="number" class="form-input" [(ngModel)]="grrForm.qtyInvoice">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Actual Qty Received</label>
+            <input type="number" class="form-input" [(ngModel)]="grrForm.qtyReceived">
+          </div>
+        </div>
+      </div>
+
+      <!-- WAREHOUSE CHECKS -->
+      <div class="section-card">
+        <h3 class="section-header">Warehouse Checks</h3>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Weighing Slip</label>
+            <select class="form-select" [(ngModel)]="grrForm.weighingSlip">
+              <option>Yes</option>
+              <option>No</option>
+              <option>N/A</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Material Acceptable</label>
+            <select class="form-select" [(ngModel)]="grrForm.materialOk">
+              <option>Yes</option>
+              <option>No</option>
+              <option>N/A</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Physical Damage</label>
+            <select class="form-select" [(ngModel)]="grrForm.damageOk">
+              <option>Yes</option>
+              <option>No</option>
+              <option>N/A</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- OFFICE CHECKS -->
+      <div class="section-card">
+        <h3 class="section-header">Office Checks</h3>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">MTC Available</label>
+            <select class="form-select" [(ngModel)]="grrForm.mtcAvailable">
+              <option>Yes</option>
+              <option>No</option>
+              <option>N/A</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Transporter</label>
+            <input class="form-input" [(ngModel)]="grrForm.transporter">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">LR / Vehicle No</label>
+            <input class="form-input" [(ngModel)]="grrForm.lrNo">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Remarks</label>
+          <textarea class="form-textarea" [(ngModel)]="grrForm.remarks"></textarea>
+        </div>
+      </div>
+
+
+      <div class="modal-footer">
+        <button class="btn btn-cancel" (click)="closeGRRModal()">Cancel</button>
+        <button class="btn btn-save" (click)="generateGRR()">Generate GRR</button>
+      </div>
     </div>
 
   </div>
 </div>
+
 
 <!-- MIR MODAL -->
 <div class="modal-overlay" *ngIf="showMIRModal" (click)="closeMIRModal()">
@@ -569,28 +800,245 @@
     <div class="modal-header">
       <h2 class="modal-title">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
-          <path
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-            stroke="currentColor" stroke-width="2" />
+          <path d="M14 4H10a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V10l-6-6z" stroke="currentColor"
+            stroke-width="2" />
         </svg>
-        Material Inspection Report (MIR)
+        Materials Inspection Report (MIR)
       </h2>
-      <button class="modal-close" (click)="closeMIRModal()">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <button class="modal-close" (click)="closeMIRModal()"><svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
         </svg>
       </button>
     </div>
 
+    <!-- <div class="mir-form">
+      <div class="modal-box large">
+        <h3>Materials Inspection Report (MIR)</h3>
+
+        <label>Customer Name:</label>
+        <input type="text" [(ngModel)]="mirForm.customerName">
+
+        <label>Report No:</label>
+        <input type="text" [(ngModel)]="mirForm.reportNo">
+
+        <label>Date:</label>
+        <input type="date" [(ngModel)]="mirForm.date">
+
+        <label>PO No & Date:</label>
+        <input type="text" [(ngModel)]="mirForm.poNoDate">
+
+        <label>Material Dispatched On:</label>
+        <input type="date" [(ngModel)]="mirForm.dispatchedOn">
+
+        <label>Material Description:</label>
+        <textarea [(ngModel)]="mirForm.materialDesc"></textarea>
+
+        <label>Tax Invoice / Delivery Challan No:</label>
+        <input type="text" [(ngModel)]="mirForm.challanNo">
+
+        <label>Qty as per Invoice:</label>
+        <input type="text" [(ngModel)]="mirForm.qtyInvoice">
+
+        <label>Batch No:</label>
+        <input type="text" [(ngModel)]="mirForm.batchNo">
+
+        <h4>Warehouse Checks</h4>
+
+        <label>Material Verified as per order</label>
+        <select [(ngModel)]="mirForm.materialVerified">
+          <option>Yes</option>
+          <option>No</option>
+          <option>N/A</option>
+        </select>
+
+        <h4>Office Checks</h4>
+        <label>Material Test Certificate:</label>
+        <select [(ngModel)]="mirForm.mtcAvailable">
+          <option>Yes</option>
+          <option>No</option>
+          <option>N/A</option>
+        </select>
+
+        <label>Transporter Name:</label>
+        <input type="text" [(ngModel)]="mirForm.transporter">
+
+        <label>LR No / Vehicle No:</label>
+        <input type="text" [(ngModel)]="mirForm.lrNo">
+
+        <label>Approved for Invoice Booking:</label>
+        <select [(ngModel)]="mirForm.approved">
+          <option>Yes</option>
+          <option>No</option>
+          <option>N/A</option>
+        </select>
+
+        <label>Remarks:</label>
+        <textarea [(ngModel)]="mirForm.remarks"></textarea>
+
+        <label>Prepared By:</label>
+        <input type="text" [(ngModel)]="mirForm.preparedBy">
+
+        <label>Checked By:</label>
+        <input type="text" [(ngModel)]="mirForm.checkedBy">
+
+        <label>Approved By:</label>
+        <input type="text" [(ngModel)]="mirForm.approvedBy">
+
+        <div class="modal-footer">
+          <button class="btn btn-cancel" (click)="closeMIRModal()">Cancel</button>
+          <button class="btn btn-save" (click)="generateMIR()">Generate MIR</button>
+        </div>
+
+      </div>
+    </div> -->
+
     <div class="mir-form">
-      <!-- Continue with MIR form fields... -->
-      <!-- I'll provide the complete MIR form in the next message due to length -->
-    </div>
 
-    <div class="modal-footer">
-      <button class="btn btn-cancel" (click)="closeMIRModal()">Cancel</button>
-      <button class="btn btn-save" (click)="generateMIR()">Generate MIR</button>
-    </div>
+      <!-- BASIC DETAILS -->
+      <div class="section-card">
+        <h3 class="section-header">Basic Details</h3>
 
-  </div>
-</div>
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Customer Name</label>
+            <input class="form-input" [(ngModel)]="mirForm.customerName">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Report No</label>
+            <input class="form-input" [(ngModel)]="mirForm.reportNo">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" [(ngModel)]="mirForm.date">
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">PO No & Date</label>
+            <input class="form-input" [(ngModel)]="mirForm.poNoDate">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Material Dispatched On</label>
+            <input type="date" class="form-input" [(ngModel)]="mirForm.dispatchedOn">
+          </div>
+        </div>
+      </div>
+
+      <!-- MATERIAL DETAILS -->
+      <div class="section-card">
+        <h3 class="section-header">Material Details</h3>
+
+        <div class="form-group">
+          <label class="form-label">Material Description</label>
+          <textarea class="form-textarea" rows="3" [(ngModel)]="mirForm.materialDesc">
+      </textarea>
+        </div>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Challan / Invoice No</label>
+            <input class="form-input" [(ngModel)]="mirForm.challanNo">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Qty as per Invoice</label>
+            <input type="number" class="form-input" [(ngModel)]="mirForm.qtyInvoice">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Batch No</label>
+            <input class="form-input" [(ngModel)]="mirForm.batchNo">
+          </div>
+        </div>
+      </div>
+
+      <!-- WAREHOUSE CHECKS -->
+      <div class="section-card">
+        <h3 class="section-header">Warehouse Checks</h3>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Material Verified as per Order</label>
+            <select class="form-select" [(ngModel)]="mirForm.materialVerified">
+              <option>Yes</option>
+              <option>No</option>
+              <option>N/A</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Physical Condition Acceptable</label>
+            <select class="form-select" [(ngModel)]="mirForm.damageOk">
+              <option>Yes</option>
+              <option>No</option>
+              <option>N/A</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- OFFICE CHECKS -->
+      <div class="section-card">
+        <h3 class="section-header">Office Checks</h3>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Material Test Certificate</label>
+            <select class="form-select" [(ngModel)]="mirForm.mtcAvailable">
+              <option>Yes</option>
+              <option>No</option>
+              <option>N/A</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Transporter Name</label>
+            <input class="form-input" [(ngModel)]="mirForm.transporter">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">LR / Vehicle No</label>
+            <input class="form-input" [(ngModel)]="mirForm.lrNo">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Remarks</label>
+          <textarea class="form-textarea" rows="3" [(ngModel)]="mirForm.remarks">
+      </textarea>
+        </div>
+      </div>
+
+      <!-- APPROVAL -->
+      <div class="section-card">
+        <h3 class="section-header">Approval</h3>
+
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Prepared By</label>
+            <input class="form-input" [(ngModel)]="mirForm.preparedBy">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Checked By</label>
+            <input class="form-input" [(ngModel)]="mirForm.checkedBy">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Approved By</label>
+            <input class="form-input" [(ngModel)]="mirForm.approvedBy">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-cancel" (click)="closeMIRModal()">Cancel</button>
+        <button class="btn btn-save" (click)="generateMIR()">Generate MIR</button>
+      </div>
+
+
+    </div>

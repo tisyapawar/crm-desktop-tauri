@@ -179,103 +179,164 @@
   position: relative;
 }
 
-.btn-action-trigger {
+/* ===================================
+   ACTION BUTTONS (Modern Icon Buttons)
+   =================================== */
+
+.action-buttons {
   display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.btn-icon {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: none;
-  background: #edf2f7;
+  border: 2px solid transparent;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #2d3748;
+  background: #f7fafc;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.btn-icon svg {
   position: relative;
   z-index: 1;
-}
-
-.btn-action-trigger:hover {
-  background: #e2e8f0;
-  color: #001F3F;
-}
-
-.btn-action-trigger:focus {
-  outline: 2px solid #001F3F;
-  outline-offset: 2px;
-}
-
-.actions-menu {
-  display: none;
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  min-width: 200px;
-  z-index: 10000;
-  /* INCREASED */
-  padding: 8px;
-  animation: slideDown 0.2s ease-out;
-}
-
-/* Show menu when active */
-.actions-menu.active {
-  display: block;
-}
-
-/* For rows near the bottom, show menu upwards */
-.data-table tbody tr:nth-last-child(-n+2) .actions-menu {
-  top: auto;
-  bottom: calc(100% + 8px);
-}
-
-.action-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  background: transparent;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 500;
-  color: #2d3748;
-  cursor: pointer;
-  border-radius: 6px;
   transition: all 0.2s ease;
-  white-space: nowrap;
 }
 
-.action-item:hover {
-  background: #f7fafc;
-  color: #001F3F;
+/* View Button - Blue */
+.btn-view {
+  color: #3182ce;
+  border-color: transparent;
 }
 
-.action-item svg {
-  flex-shrink: 0;
-  color: #64748b;
+.btn-view:hover {
+  background: #ebf8ff;
+  border-color: #3182ce;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.2);
 }
 
-.action-item:hover svg {
-  color: #001F3F;
+.btn-view:hover svg {
+  color: #2c5282;
 }
 
-.action-divider {
-  height: 1px;
-  background: #e2e8f0;
-  margin: 8px 0;
+.btn-view:active {
+  transform: translateY(0);
 }
 
-.action-delete {
+/* Edit Button - Orange */
+.btn-edit {
+  color: #dd6b20;
+  border-color: transparent;
+}
+
+.btn-edit:hover {
+  background: #fffaf0;
+  border-color: #dd6b20;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(221, 107, 32, 0.2);
+}
+
+.btn-edit:hover svg {
+  color: #c05621;
+}
+
+.btn-edit:active {
+  transform: translateY(0);
+}
+
+/* Delete Button - Red */
+.btn-delete {
   color: #e53e3e;
+  border-color: transparent;
 }
 
-.action-delete:hover {
-  background: #fed7d7;
+.btn-delete:hover {
+  background: #fff5f5;
+  border-color: #e53e3e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.2);
+}
+
+.btn-delete:hover svg {
   color: #c53030;
+}
+
+.btn-delete:active {
+  transform: translateY(0);
+}
+
+/* Focus states for accessibility */
+.btn-icon:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+}
+
+.btn-edit:focus {
+  box-shadow: 0 0 0 3px rgba(221, 107, 32, 0.2);
+}
+
+.btn-delete:focus {
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.2);
+}
+
+/* Tooltips appear on hover */
+.btn-icon[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2d3748;
+  color: white;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+.btn-icon[title]:hover::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #2d3748;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+/* OLD DROPDOWN STYLES - REMOVED */
+.btn-action-trigger,
+.actions-menu,
+.action-item,
+.action-divider,
+.action-delete {
+  display: none !important;
 }
 
 .action-delete:hover svg {

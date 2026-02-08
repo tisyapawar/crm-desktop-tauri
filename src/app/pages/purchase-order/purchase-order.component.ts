@@ -20,6 +20,9 @@ export class PurchaseOrderComponent {
   showSubjectPopup = false;
   coverLetterSubject = '';
 
+  vendors: any[] = [];
+  selectedVendorId: string | null = null;
+
   /* ================= UI STATE ================= */
   showForm = false;
 
@@ -85,6 +88,7 @@ export class PurchaseOrderComponent {
 
   async ngOnInit() {
     await this.loadPurchaseOrders();
+    await this.loadVendors();
   }
 
   constructor(
@@ -106,6 +110,14 @@ export class PurchaseOrderComponent {
     this.items = [
       { item: '', qty: 1, uom: '', hsn: '', rate: 0, disc: 0, discountType: '₹', gst: 0, total: 0 }
     ];
+    this.selectedVendorId = null;
+    this.vendorName = '';
+    this.vendorId = '';
+    this.vendorGST = '';
+    this.billingAddress = '';
+    this.deliveryAddress = '';
+    this.contactPerson = '';
+    this.contactInfo = '';
     this.files = [];
   }
 
@@ -185,6 +197,9 @@ export class PurchaseOrderComponent {
       creditDays: this.creditDays,
       deliveryTerms: this.deliveryTerms,
       expectedDeliveryDate: this.expectedDeliveryDate,
+      transporterName: this.transporterName,
+      transportMode: this.transportMode,
+      deliveryLocation: this.deliveryLocation,
       grandTotal: this.getGrandTotal(),
       items: JSON.parse(JSON.stringify(this.items)),
       freightCharges: this.freightCharges,
@@ -201,6 +216,14 @@ export class PurchaseOrderComponent {
     this.vendorId = po.vendorId;
     this.billingAddress = po.billingAddress;
     this.deliveryAddress = po.deliveryAddress;
+    this.vendorGST = po.vendorGST || '';
+    this.contactPerson = po.contactPerson || '';
+    this.contactInfo = po.contactInfo || '';
+    this.expectedDeliveryDate = po.expectedDeliveryDate || '';
+    this.deliveryTerms = po.deliveryTerms || 'FOB';
+    this.transporterName = po.transporterName || '';
+    this.transportMode = po.transportMode || 'Road';
+    this.deliveryLocation = po.deliveryLocation || 'Warehouse';
     this.items = JSON.parse(JSON.stringify(po.items));
     this.freightCharges = po.freightCharges;
     this.purchaseOrderStatus = po.status;
@@ -252,6 +275,9 @@ export class PurchaseOrderComponent {
       creditDays: this.creditDays,
       deliveryTerms: this.deliveryTerms,
       expectedDeliveryDate: this.expectedDeliveryDate,
+      transporterName: this.transporterName,
+      transportMode: this.transportMode,
+      deliveryLocation: this.deliveryLocation,
       items: this.items,
       freightCharges: this.freightCharges,
       grandTotal: this.getGrandTotal(),
@@ -280,6 +306,80 @@ export class PurchaseOrderComponent {
       const exists = this.files.some(existing => existing.name === f.name && existing.size === f.size);
       if (!exists) this.files.push(f);
     }
+  }
+
+  /**
+   * ✅ FIXED: Now correctly finds vendor by database ID
+   */
+  // onVendorSelect(vendorId: number) {
+  //   console.log('🔍 onVendorSelect called with ID:', vendorId);
+  //   console.log('📋 Available vendors:', this.vendors);
+  //   console.log('SELECTED VENDOR ID:', vendorId);
+
+  //   // Find vendor by database ID (not vendorId field)
+  //   const v = this.vendors.find(x => x.id === vendorId);
+
+  //   console.log('✅ Found vendor:', v);
+
+  //   if (!v) {
+  //     console.warn('⚠️ Vendor not found with id:', vendorId);
+  //     return;
+  //   }
+
+  //   this.vendorName = v.companyName || '';
+  //   this.vendorId = v.vendorId || '';
+  //   this.vendorGST = v.gst || '';
+  //   this.contactPerson = v.contactPerson || '';
+  //   this.contactInfo = `${v.mobile || ''} ${v.email || ''}`.trim();
+
+  //   this.billingAddress = this.formatAddress(v.billing);
+  //   this.deliveryAddress = this.formatAddress(v.shipping);
+
+  //   console.log('✅ Auto-filled vendor details:', {
+  //     vendorName: this.vendorName,
+  //     vendorId: this.vendorId,
+  //     vendorGST: this.vendorGST
+  //   });
+  // }
+
+  onVendorSelect(vendorId: string | null) {
+    if (!vendorId) return;
+
+    console.log('🔍 onVendorSelect called with vendorId:', vendorId);
+
+    const v = this.vendors.find(x => x.vendorId === vendorId);
+    if (!v) return;
+
+    this.vendorName = v.companyName || '';
+    this.vendorId = v.vendorId || '';
+    this.vendorGST = v.gst || '';
+    this.contactPerson = v.contactPerson || '';
+    this.contactInfo = `${v.mobile || ''} ${v.email || ''}`.trim();
+    this.billingAddress = this.formatAddress(v.billing);
+    this.deliveryAddress = this.formatAddress(v.shipping);
+
+    console.log('✅ Auto-filled vendor details:', {
+      vendorName: this.vendorName,
+      vendorId: this.vendorId,
+      vendorGST: this.vendorGST
+    });
+  }
+
+  private formatAddress(addr: any): string {
+    if (!addr) return '';
+    return [
+      addr.street,
+      addr.area,
+      addr.city,
+      addr.state,
+      addr.pincode,
+      addr.country
+    ].filter(Boolean).join(', ');
+  }
+
+  async loadVendors() {
+    this.vendors = await this.dbService.getAll('vendors');
+    console.log('📥 Loaded vendors:', this.vendors);
   }
 
   async loadPurchaseOrders() {
@@ -327,8 +427,6 @@ export class PurchaseOrderComponent {
     this.purchaseOrderStatus = 'SUBMITTED';
     console.log('📌 Status set to SUBMITTED');
 
-    // const payload = this.buildPurchaseOrderPayload(this.editingPO);
-
     const existing = this.editingPO
       ?? await this.dbService.getPurchaseOrderByNo(this.poNumber);
 
@@ -346,35 +444,6 @@ export class PurchaseOrderComponent {
     console.groupEnd();
     alert('Purchase Order submitted');
   }
-
-  // async approvePO() {
-  //   console.group('✅ approvePO()');
-
-  //   this.purchaseOrderStatus = 'APPROVED';
-  //   console.log('📌 Status set to APPROVED');
-
-  //   // const payload = this.buildPurchaseOrderPayload(this.editingPO);
-
-  //   const existing = this.editingPO
-  //     ?? await this.dbService.getPurchaseOrderByNo(this.poNumber);
-
-  //   this.purchaseOrderStatus = 'APPROVED';
-
-  //   const payload = this.buildPurchaseOrderPayload(existing);
-  //   await this.dbService.addOrUpdatePurchaseOrder(payload);
-
-  //   console.log('➡️ Calling dbService.addOrUpdatePurchaseOrder');
-  //   await this.dbService.addOrUpdatePurchaseOrder(payload);
-
-  //   console.log('🔄 Reloading purchase orders from DB');
-  //   await this.loadPurchaseOrders();
-
-  //   this.editingPO = null;
-  //   console.log('🎉 Purchase Order approved');
-
-  //   console.groupEnd();
-  //   alert('Purchase Order approved');
-  // }
 
   async approvePO() {
     console.group('✅ approvePO()');
@@ -439,160 +508,6 @@ export class PurchaseOrderComponent {
   }
 
   /* ================= PDF GENERATION ================= */
-  // downloadPurchaseOrderPDF() {
-  //   const doc = new jsPDF();
-  //   const pageWidth = doc.internal.pageSize.getWidth();
-  //   const pageHeight = doc.internal.pageSize.getHeight();
-
-  //   // ========================================================================
-  //   // PAGE 1: COVER LETTER
-  //   // ========================================================================
-
-  //   this.generateCoverLetterPage(doc, pageWidth, pageHeight);
-
-  //   // ========================================================================
-  //   // PAGE 2: TERMS & CONDITIONS
-  //   // ========================================================================
-
-  //   doc.addPage();
-  //   this.generateTermsAndConditionsPage(doc, pageWidth, pageHeight);
-
-  //   // ========================================================================
-  //   // PAGE 3: QUANTITY, RATES & TECHNICAL SCHEDULE
-  //   // ========================================================================
-
-  //   doc.addPage();
-  //   this.generateQuantityRatesPage(doc, pageWidth, pageHeight);
-
-  //   // Save PDF
-  //   doc.save(`PO_${this.poNumber.replace(/\//g, '_')}.pdf`);
-  // }
-
-  // ========================================================================
-  // PAGE 1: COVER LETTER
-  // ========================================================================
-
-  // private generateCoverLetterPage(doc: any, pageWidth: number, pageHeight: number) {
-  //   let yPosition = 10;
-
-  //   // ============ LOGO SECTION ============
-  //   // Option 1: Logo from assets folder (RECOMMENDED - SIMPLEST)
-  //   const logoPath = 'assets/LOGO.jpg';
-
-  //   // Logo dimensions - adjust these based on your logo
-  //   const logoWidth = 40;   // Width in mm
-  //   const logoHeight = 20;  // Height in mm (maintaining aspect ratio of 3.82:1)
-  //   const logoX = (pageWidth - logoWidth) / 2; // Center horizontally
-
-  //   try {
-  //     doc.addImage(logoPath, 'PNG', logoX, yPosition, logoWidth, logoHeight);
-  //     yPosition += logoHeight + 5;
-  //   } catch (error) {
-  //     console.warn('Logo could not be loaded from:', logoPath, error);
-  //     // Continue without logo - PDF will still generate
-  //   }
-
-  //   yPosition += 5;
-
-  //   // ============ COMPANY HEADER ============
-  //   doc.setFontSize(16);
-  //   doc.setFont('helvetica', 'bold');
-  //   doc.text('Navbharat Insulation & Engg. Co.', pageWidth / 2, yPosition, { align: 'center' });
-
-  //   yPosition += 7;
-  //   doc.setFontSize(9);
-  //   doc.setFont('helvetica', 'bold');
-  //   doc.text('Office : A N House, 4th Floor, TPS-III, 31st Road, Bandra(W), MUMBAI - 400050',
-  //     pageWidth / 2, yPosition, { align: 'center' });
-
-  //   yPosition += 5;
-  //   doc.setFont('helvetica', 'normal');
-  //   doc.text('Tele Fax (022) 16441702, 26441740 : info@navbharatgroup.com',
-  //     pageWidth / 2, yPosition, { align: 'center' });
-
-  //   yPosition += 15;
-
-  //   // ============ PO NUMBER AND DATE ============
-  //   doc.setFontSize(12);
-  //   doc.setFont('helvetica', 'normal');
-  //   doc.text(this.poNumber, 15, yPosition);
-
-  //   const poDate = this.poDate ? new Date(this.poDate).toLocaleDateString('en-IN', {
-  //     day: '2-digit',
-  //     month: '2-digit',
-  //     year: 'numeric'
-  //   }) : new Date().toLocaleDateString('en-IN', {
-  //     day: '2-digit',
-  //     month: '2-digit',
-  //     year: 'numeric'
-  //   });
-  //   doc.text(`Date: ${poDate}`, pageWidth - 15, yPosition, { align: 'right' });
-
-  //   yPosition += 15;
-
-  //   // ============ VENDOR ADDRESS ============
-  //   doc.setFont('helvetica', 'bold');
-  //   doc.text('To,', 15, yPosition);
-  //   yPosition += 6;
-
-  //   doc.setFont('helvetica', 'normal');
-  //   if (this.vendorName) {
-  //     const vendorLines = doc.splitTextToSize(this.vendorName, 120);
-  //     doc.text(vendorLines, 15, yPosition);
-  //     yPosition += vendorLines.length * 5;
-  //   }
-
-  //   if (this.billingAddress) {
-  //     const addressLines = doc.splitTextToSize(this.billingAddress, 120);
-  //     doc.text(addressLines, 15, yPosition);
-  //     yPosition += addressLines.length * 5;
-  //   }
-
-  //   yPosition += 10;
-
-  //   // ============ SUBJECT ============
-  //   doc.setFont('helvetica', 'normal');
-  //   const itemDescription = this.items.length > 0 && this.items[0].item
-  //     ? this.items[0].item
-  //     : 'Materials as per attached schedule';
-  //   doc.text(`Sub. : Purchase Order for Supply of ${itemDescription}`, 15, yPosition);
-
-  //   yPosition += 10;
-
-  //   // ============ LETTER BODY ============
-  //   doc.text('Dear Sir,', 15, yPosition);
-
-  //   yPosition += 10;
-
-  //   const bodyText = `This refers to our requirement & reference to your final offer thru WA/email Dtd ${poDate}, we are pleased to place an order on you towards supply of ${itemDescription}`;
-  //   const bodyLines = doc.splitTextToSize(bodyText, pageWidth - 30);
-  //   doc.text(bodyLines, 15, yPosition);
-  //   yPosition += bodyLines.length * 5 + 5;
-
-  //   doc.setFontSize(11);
-  //   doc.text('Schedule of Terms & Condition and Technical Data are enclosed.', 15, yPosition);
-
-  //   yPosition += 15;
-
-  //   // ============ CLOSING ============
-  //   doc.setFontSize(12);
-  //   doc.text('Thanking You,', 15, yPosition);
-  //   yPosition += 8;
-  //   doc.text('Truly Yours,', 15, yPosition);
-  //   yPosition += 6;
-  //   doc.text('For, Navbharat Insulation & Engg. Co.', 15, yPosition);
-
-  //   yPosition += 20;
-
-  //   doc.text('Authorised Signatory', 15, yPosition);
-  // }
-
-  // ========================================================================
-  // PAGE 2: TERMS & CONDITIONS
-  // ========================================================================
-
-  // Updated downloadPurchaseOrderPDF() method with subject input prompt
-  // Replace your existing downloadPurchaseOrderPDF method with this one
 
   downloadPurchaseOrderPDF() {
     console.log("well well well")
@@ -645,11 +560,6 @@ export class PurchaseOrderComponent {
     this.coverLetterSubject = '';
   }
 
-  // UPDATE: generateCoverLetterPage method signature
-  // Change from:
-  // private generateCoverLetterPage(doc: any, pageWidth: number, pageHeight: number) {
-
-  // To:
   private generateCoverLetterPage(doc: any, pageWidth: number, pageHeight: number, subject: string) {
     let yPosition = 10;
 
@@ -877,8 +787,8 @@ export class PurchaseOrderComponent {
 
     // 15. Contact Person
     const contactText = this.contactPerson && this.contactInfo
-      ? `${this.contactPerson} (${this.contactInfo})`
-      : this.contactPerson || this.contactInfo || 'To be confirmed';
+      ? `${this.contactPerson}`
+      : this.contactPerson || 'To be confirmed';
     addTerm('Contact Person', contactText, true);
 
     // 16. Bill To / Billing Address
@@ -927,10 +837,6 @@ export class PurchaseOrderComponent {
     yPosition += 5;
     doc.text('Accepted as above', pageWidth - 15, yPosition, { align: 'right' });
   }
-
-  // ========================================================================
-  // PAGE 3: QUANTITY, RATES & TECHNICAL SCHEDULE
-  // ========================================================================
 
   private generateQuantityRatesPage(doc: any, pageWidth: number, pageHeight: number) {
     let yPosition = 15;

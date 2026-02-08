@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DBService } from '../../service/db.service';
 
-type OrderStatus = 'offers' | 'ongoing' | 'previous';
+type OrderStatus = 'offers' | 'ongoing' | 'completed';
 
 interface OrderItem {
   productName: string;
@@ -11,6 +11,8 @@ interface OrderItem {
   qty: number;
   rate?: number;
   amount?: number;
+  hsn?: number;
+  uom?: string;
 }
 
 interface Order {
@@ -39,10 +41,10 @@ interface Order {
 })
 export class OrdersComponent implements OnInit {
 
-  selectedFilter: OrderStatus | 'previous' = 'offers';
+  selectedFilter: OrderStatus | 'completed' = 'offers';
   orders: Order[] = [];
 
-  // modals
+  // Modals
   showModal = false;
   isEditing = false;
   editingOrderId: number | null = null;
@@ -51,11 +53,13 @@ export class OrdersComponent implements OnInit {
   showDetailsModal = false;
   detailsOrder: Order | null = null;
 
+  // Data Lists
   inquiriesList: any[] = [];
-  // reloadOrdersLocal: any;
+  inventoryList: any[] = []; // ✅ New Inventory List
 
   constructor(private dbService: DBService) { }
 
+  // Action Menu Helpers
   activeMenuId: any = null;
 
   toggleActionMenu(event: Event, id: any) {
@@ -75,6 +79,7 @@ export class OrdersComponent implements OnInit {
   ngOnInit() {
     this.loadOrders();
     this.loadInquiriesFromDB();
+    this.loadInventoryFromDB(); // ✅ Load inventory on init
   }
 
   /* -------- FILTERED ORDERS -------- */
@@ -83,61 +88,74 @@ export class OrdersComponent implements OnInit {
   }
 
   applyFilter() {
+    // Trigger logic on filter change if needed
   }
 
-  /* -------- LOAD INQUIRIES -------- */
-  // private loadInquiriesFromDB() {
-  //   this.dbService.openDB().then(db => {
-  //     const tx = db.transaction('inquiries', 'readonly');
-  //     const store = tx.objectStore('inquiries');
-  //     const req = store.getAll();
-
-  //     req.onsuccess = () => {
-  //       this.inquiriesList = req.result || [];
-  //       console.log("Loaded inquiries:", this.inquiriesList);
-  //     };
-  //   });
-  // }
-
+  /* -------- LOAD DATA -------- */
   private loadInquiriesFromDB() {
-    this.dbService.openDB().then(db => {
-      console.log("DB OPENED FOR ORDERS:", db);
-
-      const tx = db.transaction('inquiries', 'readonly');
-      const store = tx.objectStore('inquiries');
-      const req = store.getAll();
-
-      req.onsuccess = () => {
-        console.log("INQUIRIES LOADED FROM DB:", req.result);
-        this.inquiriesList = req.result || [];
-      };
-
-      req.onerror = () => {
-        console.error("ERROR loading inquiries:", req.error);
-      };
+    this.dbService.getAll('inquiries').then(data => {
+      this.inquiriesList = data || [];
+      console.log("📄 Inquiries loaded:", this.inquiriesList.length);
     });
   }
 
+  private loadInventoryFromDB() {
+    this.dbService.getAll('inventory').then(data => {
+      this.inventoryList = data || [];
+      console.log("📦 Inventory loaded for pricing:", this.inventoryList.length);
+    });
+  }
 
-  /* -------- INQUIRY → ORDER LINKING -------- */
+  /* -------- INQUIRY → ORDER LINKING (WITH RATE LOOKUP) -------- */
   onInquirySelect(event: any) {
-    const inqId = Number(event.target.value);
-    if (!inqId) return;
+    const val = event.target.value;
+    if (!val) return;
 
-    const selectedInquiry = this.inquiriesList.find(i => i.id === inqId);
-    if (!selectedInquiry) return;
+    // Use loose equality (==) to handle string/number ID mismatch
+    const selectedInquiry = this.inquiriesList.find(i => i.id == val);
 
-    this.orderForm.inquiryNo = selectedInquiry.no || selectedInquiry.id;
-    this.orderForm.customerName = selectedInquiry.customerName;
+    if (!selectedInquiry) {
+      console.warn("❌ Inquiry not found for ID:", val);
+      return;
+    }
+
+    console.log("✅ Selected Inquiry:", selectedInquiry);
+
+    // 1. Auto-fill Header
+    this.orderForm.inquiryNo = selectedInquiry.no || selectedInquiry.inquiryNo || String(selectedInquiry.id);
+    this.orderForm.customerName = selectedInquiry.companyName || '';
     this.orderForm.salesman = selectedInquiry.salesman || '';
 
-    this.orderForm.items = selectedInquiry.items.map((it: any) => ({
-      productName: it.name,
-      qty: it.qty,
-      rate: 0,
-      amount: 0
-    }));
+    // 2. Auto-fill Items & Lookup Rates
+    if (selectedInquiry.items && Array.isArray(selectedInquiry.items)) {
+      this.orderForm.items = selectedInquiry.items.map((it: any) => {
 
+        // Normalize Product Name
+        const pName = it.productName || it.name || it.item || '';
+
+        // 🔍 Find product in inventory to get the Rate/Price
+        const product = this.inventoryList.find((p: any) => {
+          const invName = (p.displayName || p.name || '').toLowerCase().trim();
+          const targetName = pName.toLowerCase().trim();
+          return invName === targetName;
+        });
+
+        // Use inventory price if available, otherwise 0
+        // Checks for 'price', 'rate', or 'sellingPrice' fields
+        const unitRate = product ? (Number(product.price) || Number(product.rate) || Number(product.sellingPrice) || 0) : 0;
+
+        return {
+          productName: pName,
+          hsn: it.hsn,
+          uom: it.uom,
+          qty: Number(it.qty) || Number(it.quantity) || 1,
+          rate: unitRate,  // ✅ Auto-filled from inventory
+          amount: 0        // Will be calculated below
+        };
+      });
+    }
+
+    // 3. Recalculate totals immediately
     this.recalculateFormAmounts();
   }
 
@@ -153,15 +171,11 @@ export class OrdersComponent implements OnInit {
         if (!inquiry) return;
 
         inquiry.status = 'converted';
-
-        const putReq = store.put(inquiry);
-        putReq.onsuccess = () => {
-          console.log("Inquiry marked as CONVERTED:", inquiryId);
-        };
+        store.put(inquiry); // No need to wait for success here strictly
+        console.log("Inquiry marked as CONVERTED:", inquiryId);
       };
     });
   }
-
 
   /* -------- OPEN / CLOSE MODAL -------- */
   openAddModal() {
@@ -175,6 +189,7 @@ export class OrdersComponent implements OnInit {
   openEditModal(order: Order) {
     this.isEditing = true;
     this.editingOrderId = order.id ?? null;
+    // Deep clone to prevent mutating the table row directly
     this.orderForm = JSON.parse(JSON.stringify(order));
     this.showModal = true;
   }
@@ -200,98 +215,90 @@ export class OrdersComponent implements OnInit {
     this.recalculateFormAmounts();
   }
 
-  /* -------- AMOUNT CALCULATION -------- */
+  /* -------- AMOUNT CALCULATION (STRICT TYPES) -------- */
   recalculateFormAmounts() {
     let amount = 0;
     this.orderForm.items.forEach(it => {
-      it.amount = (Number(it.qty) || 0) * (Number(it.rate) || 0);
+      const qty = Number(it.qty) || 0;
+      const rate = Number(it.rate) || 0;
+
+      it.amount = qty * rate;
       amount += it.amount;
     });
 
     this.orderForm.amount = Number(amount.toFixed(2));
-    const gst = (Number(this.orderForm.gstPercent || 0) / 100) * this.orderForm.amount;
+
+    const gstPercent = Number(this.orderForm.gstPercent) || 0;
+    const gst = (this.orderForm.amount * gstPercent) / 100;
+
     this.orderForm.totalAmount = Number((this.orderForm.amount + gst).toFixed(2));
   }
 
-
-  // submitForm() {
-
-  //   // basic validation
-  //   if (!this.orderForm.customerName || this.orderForm.items.length === 0) {
-  //     alert('Please enter customer and at least one item.');
-  //     return;
-  //   }
-
-  //   /* -------------------------------
-  //       UPDATE EXISTING ORDER
-  //   --------------------------------*/
-  //   if (this.isEditing && this.editingOrderId != null) {
-  //     this.orderForm.id = this.editingOrderId;
-
-  //     this.updateOrderInDB(this.orderForm)
-  //       .then(() => {
-  //         this.showModal = false;
-  //         this.reloadOrdersLocal();
-  //       })
-  //       .catch(err => console.error(err));
-
-  //     return;  // stop here (do not run create logic)
-  //     this.loadOrders(); 
-  //   }
-
-  //   /* -------------------------------
-  //       CREATE NEW ORDER
-  //   --------------------------------*/
-  //   this.createOrderInDB(this.orderForm)
-  //     .then(() => {
-
-  //       // ⭐ NEW: Mark linked inquiry as "converted"
-  //       if (this.orderForm.inquiryNo) {
-  //         this.markInquiryConverted(Number(this.orderForm.inquiryNo));
-  //       }
-
-  //       this.showModal = false;
-  //       this.reloadOrdersLocal();
-  //     })
-  //     .catch(err => console.error(err));
-  // }
-
+  /* -------- SUBMIT FORM (CREATE/UPDATE) -------- */
   submitForm() {
-
+    // 1. Validation
     if (!this.orderForm.customerName || this.orderForm.items.length === 0) {
       alert('Please enter customer and at least one item.');
       return;
     }
 
+    // 2. Prepare Data (Deep Clone & Type Conversion)
+    const payload: Order = JSON.parse(JSON.stringify(this.orderForm));
+
+    // Force numbers for financial fields
+    payload.amount = Number(payload.amount) || 0;
+    payload.gstPercent = Number(payload.gstPercent) || 0;
+
+    // Recalculate totals strictly before saving
+    let calcAmount = 0;
+    payload.items.forEach(item => {
+      item.qty = Number(item.qty) || 0;
+      item.rate = Number(item.rate) || 0;
+      item.amount = item.qty * item.rate;
+      calcAmount += item.amount;
+    });
+
+    payload.amount = parseFloat(calcAmount.toFixed(2));
+    const gstAmount = (payload.amount * payload.gstPercent) / 100;
+    payload.totalAmount = parseFloat((payload.amount + gstAmount).toFixed(2));
+
     /* ---------- UPDATE ---------- */
     if (this.isEditing && this.editingOrderId != null) {
-      this.orderForm.id = this.editingOrderId;
+      payload.id = this.editingOrderId; // Ensure ID is attached for update
 
-      this.updateOrderInDB(this.orderForm).then(() => {
+      this.updateOrderInDB(payload).then(() => {
         console.log('✅ Order updated');
         this.showModal = false;
-        this.loadOrders();   // ✅ IMMEDIATE refresh
+        this.loadOrders();
+      }).catch(err => {
+        console.error('❌ Update failed', err);
+        alert('Failed to update order');
       });
 
       return;
     }
 
     /* ---------- CREATE ---------- */
-    this.createOrderInDB(this.orderForm).then(() => {
+    // Ensure ID is undefined so IndexedDB auto-increments
+    delete payload.id;
+
+    this.createOrderInDB(payload).then(() => {
       console.log('✅ Order created');
 
-      this.createShippingReminder(this.orderForm);
+      // Handle side effects
+      this.createShippingReminder(payload);
 
-      if (this.orderForm.inquiryNo) {
-        this.markInquiryConverted(Number(this.orderForm.inquiryNo));
+      if (payload.inquiryNo) {
+        this.markInquiryConverted(Number(payload.inquiryNo));
       }
 
       this.showModal = false;
-      this.loadOrders();     // ✅ IMMEDIATE refresh
+      this.loadOrders();
+    }).catch(err => {
+      console.error('❌ Create failed', err);
+      alert('Failed to save order');
     });
   }
-
-
 
   /* -------- UPDATE STATUS -------- */
   updateStatus(orderId: number | undefined, newStatus: OrderStatus) {
@@ -302,7 +309,7 @@ export class OrdersComponent implements OnInit {
     order.status = newStatus;
 
     this.updateOrderInDB(order).then(() => {
-      if (newStatus === 'previous') this.reduceInventoryForOrder(order);
+      if (newStatus === 'completed') this.reduceInventoryForOrder(order);
       this.loadOrders();
     });
   }
@@ -315,18 +322,7 @@ export class OrdersComponent implements OnInit {
     this.deleteOrderFromDB(orderId).then(() => this.loadOrders());
   }
 
-  /* -------- CRUD USING DBSERVICE -------- */
-  // private async loadOrdersFromDB() {
-  //   this.dbService.openDB().then(db => {
-  //     const tx = db.transaction('orders', 'readonly');
-  //     const store = tx.objectStore('orders');
-  //     const req = store.getAll();
-
-  //     req.onsuccess = () => {
-  //       this.orders = req.result || [];
-  //     };
-  //   });
-  // }
+  /* -------- CRUD METHODS (FIXED) -------- */
 
   private createOrderInDB(order: Order): Promise<void> {
     return this.dbService.openDB().then(db => {
@@ -334,9 +330,15 @@ export class OrdersComponent implements OnInit {
         const tx = db.transaction('orders', 'readwrite');
         const store = tx.objectStore('orders');
 
-        const req = store.add(order);
+        // IMPORTANT: Remove ID property if present to prevent KeyGenerator errors
+        const { id, ...orderWithoutId } = order;
+
+        const req = store.add(orderWithoutId);
         req.onsuccess = () => resolve();
-        req.onerror = e => reject(e);
+        req.onerror = (e) => {
+          console.error("DB Add Error:", (e.target as any).error);
+          reject(e);
+        };
       });
     });
   }
@@ -347,9 +349,18 @@ export class OrdersComponent implements OnInit {
         const tx = db.transaction('orders', 'readwrite');
         const store = tx.objectStore('orders');
 
+        // Check ID exists
+        if (!order.id) {
+          reject('Cannot update order without ID');
+          return;
+        }
+
         const req = store.put(order);
         req.onsuccess = () => resolve();
-        req.onerror = e => reject(e);
+        req.onerror = (e) => {
+          console.error("DB Update Error:", (e.target as any).error);
+          reject(e);
+        };
       });
     });
   }
@@ -362,19 +373,18 @@ export class OrdersComponent implements OnInit {
 
         const req = store.delete(orderId);
         req.onsuccess = () => resolve();
-        req.onerror = e => reject(e);
+        req.onerror = (e) => reject(e);
       });
     });
   }
 
-  /* -------- ORDER NUMBER -------- */
+  /* -------- HELPERS -------- */
   private generateOrderNo(): string {
     const year = new Date().getFullYear();
     const sequential = Math.floor((Date.now() % 1000000) / 10).toString().padStart(4, '0');
     return `ORD/${year}/${sequential}`;
   }
 
-  /* -------- INVENTORY REDUCTION -------- */
   private reduceInventoryForOrder(order: Order): void {
     order.items.forEach(it => {
       this.dbService.openDB().then(db => {
@@ -392,7 +402,6 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  /* -------- EMPTY ORDER TEMPLATE -------- */
   private getEmptyOrder(): Order {
     const today = new Date().toISOString().slice(0, 10);
     return {
@@ -405,7 +414,7 @@ export class OrdersComponent implements OnInit {
       salesman: '',
       items: [{ productName: '', qty: 1, rate: 0, amount: 0 }],
       amount: 0,
-      gstPercent: 0,
+      gstPercent: 18,
       totalAmount: 0,
       status: 'offers',
       remarks: ''
@@ -416,7 +425,8 @@ export class OrdersComponent implements OnInit {
     this.dbService.getAll('orders').then(data => {
       console.log('📦 Orders loaded:', data);
       this.orders = data;
-      this.applyFilter(); // important
+      // Re-apply filter immediately after loading
+      this.applyFilter();
     });
   }
 
@@ -425,34 +435,21 @@ export class OrdersComponent implements OnInit {
     console.log('✅ NEW ORDER CREATED');
     console.log('═══════════════════════════════════════');
     console.log('📦 Order No:', order.orderNo);
-    console.log('👤 Customer Name:', order.customerName);
-    console.log('📅 Order Date:', order.orderDate);
-    console.log('───────────────────────────────────────');
 
     try {
-      console.log('🔔 Creating shipping reminder with params:');
-      console.log('  ├─ type: order');
-      console.log('  ├─ name:', order.customerName);
-      console.log('  ├─ mobile: (not stored in orders)');
-      console.log('  ├─ referenceNo:', order.orderNo);
-      console.log('  ├─ followUpDays: 2');
-      console.log('  └─ note:', `Ship order ${order.orderNo} - ${order.customerName}`);
-
       await this.dbService.createAutoReminder({
         type: 'order',
         name: order.customerName,
-        mobile: '', // Orders don't have mobile, or fetch from customer if needed
+        mobile: '',
         referenceNo: order.orderNo,
         followUpDays: 2, // Ship in 2 days
         note: `Ship order ${order.orderNo} - ${order.customerName}`
       });
 
       console.log('✅ Shipping reminder created');
-      console.log('═══════════════════════════════════════');
 
     } catch (error) {
       console.error('❌ Shipping reminder creation failed:', error);
-      console.log('═══════════════════════════════════════');
     }
   }
 }

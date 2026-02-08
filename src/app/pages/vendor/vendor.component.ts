@@ -13,16 +13,31 @@ interface FileAttachment {
 interface Vendor {
   id?: number;
   vendorId?: string;
-
-  // ✅ SAME IDEA AS CUSTOMER BUSINESS VERTICAL
   vendorVertical?: string;
-
   vendorType?: string;
   companyName?: string;
   category?: string;
   brandName?: string;
   contactPerson?: string;
-  address?: string;
+
+  billing: {
+    street: string;
+    area: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+  };
+
+  shipping: {
+    street: string;
+    area: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+  };
+
   website?: string;
   email?: string;
   mobile?: string;
@@ -48,33 +63,17 @@ interface Vendor {
 })
 export class VendorComponent implements OnInit {
 
-
-
-  private generateVendorId(): string {
-    let max = 0;
-
-    for (const v of this.vendors) {
-      if (!v.vendorId) continue;
-
-      const match = v.vendorId.match(/^VEN-(\d+)$/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > max) max = num;
-      }
-    }
-
-    const next = max + 1;
-    return 'VEN-' + next.toString().padStart(3, '0');
-  }
-
   vendors: Vendor[] = [];
   filteredVendors: Vendor[] = [];
-  newVendor: Vendor = {} as Vendor;
+  newVendor: Vendor = this.getEmptyVendor();
 
   isEditing = false;
   showModal = false;
   searchTerm = '';
   editingIndex = -1;
+
+  // ✅ NEW: checkbox state
+  sameAsBilling = false;
 
   constructor(private dbService: DBService) { }
 
@@ -82,6 +81,57 @@ export class VendorComponent implements OnInit {
     this.loadVendors();
   }
 
+  private getEmptyVendor(): Vendor {
+    return {
+      vendorVertical: '',
+      vendorType: '',
+      companyName: '',
+      category: '',
+      brandName: '',
+      contactPerson: '',
+      website: '',
+      email: '',
+      mobile: '',
+      gst: '',
+      pan: '',
+      msme: '',
+      paymentTerms: '',
+      product: '',
+
+      billing: {
+        street: '',
+        area: '',
+        city: '',
+        state: '',
+        pincode: '',
+        country: 'India'
+      },
+
+      shipping: {
+        street: '',
+        area: '',
+        city: '',
+        state: '',
+        pincode: '',
+        country: 'India'
+      }
+    };
+  }
+
+  private generateVendorId(): string {
+    let max = 0;
+
+    for (const v of this.vendors) {
+      if (!v.vendorId) continue;
+      const match = v.vendorId.match(/^VEN-(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > max) max = num;
+      }
+    }
+
+    return 'VEN-' + (max + 1).toString().padStart(3, '0');
+  }
 
   // ---------------- LOAD ----------------
   async loadVendors() {
@@ -105,37 +155,40 @@ export class VendorComponent implements OnInit {
       );
   }
 
-  // ---------------- RESET ----------------
-  async resetVendors() {
-    if (!confirm('Remove all vendors?')) return;
-    const db = await this.dbService.openDB();
-    const tx = db.transaction('vendors', 'readwrite');
-    tx.objectStore('vendors').clear();
-    tx.oncomplete = () => {
-      this.vendors = [];
-      this.filteredVendors = [];
-    };
-  }
-
   // ---------------- MODAL ----------------
   openAddModal() {
     this.isEditing = false;
-    this.newVendor = {
-      vendorVertical: ''   // ✅ INIT LIKE CUSTOMER
-    };
+    this.sameAsBilling = false;
+    this.newVendor = this.getEmptyVendor();
     this.showModal = true;
   }
 
   openEditModal(i: number) {
     this.isEditing = true;
     this.editingIndex = i;
-    this.newVendor = JSON.parse(JSON.stringify(this.filteredVendors[i]));
+
+    const v = JSON.parse(JSON.stringify(this.filteredVendors[i]));
+
+    v.billing = v.billing || {
+      street: '', area: '', city: '', state: '', pincode: '', country: 'India'
+    };
+
+    v.shipping = v.shipping || {
+      street: '', area: '', city: '', state: '', pincode: '', country: 'India'
+    };
+
+    // ✅ NEW: auto-check checkbox if already same
+    this.sameAsBilling =
+      JSON.stringify(v.billing) === JSON.stringify(v.shipping);
+
+    this.newVendor = v;
     this.showModal = true;
   }
 
   cancelModal() {
     this.showModal = false;
-    this.newVendor = {} as Vendor;
+    this.sameAsBilling = false;
+    this.newVendor = this.getEmptyVendor();
     this.isEditing = false;
     this.editingIndex = -1;
   }
@@ -155,6 +208,15 @@ export class VendorComponent implements OnInit {
 
     this.cancelModal();
     this.loadVendors();
+  }
+
+  // ---------------- SAME AS BILLING ----------------
+  toggleSameAsBilling() {
+    if (this.sameAsBilling) {
+      this.newVendor.shipping = {
+        ...this.newVendor.billing
+      };
+    }
   }
 
   // ---------------- DELETE ----------------
@@ -183,17 +245,35 @@ export class VendorComponent implements OnInit {
     r.readAsDataURL(file);
   }
 
-  // MODAL FILES
-  onGstFileSelect(e: any) { this.readFile(e.target.files[0], f => this.newVendor.gstFile = f); }
-  onPanFileSelect(e: any) { this.readFile(e.target.files[0], f => this.newVendor.panFile = f); }
-  onMsmeFileSelect(e: any) { this.readFile(e.target.files[0], f => this.newVendor.msmeFile = f); }
+  onGstFileSelect(e: any) {
+    this.readFile(e.target.files[0], f => this.newVendor.gstFile = f);
+  }
 
-  // TABLE FILES
-  onGstFileSelectFromTable(e: any, v: Vendor) { this.saveFile(e, v, 'gstFile'); }
-  onPanFileSelectFromTable(e: any, v: Vendor) { this.saveFile(e, v, 'panFile'); }
-  onMsmeFileSelectFromTable(e: any, v: Vendor) { this.saveFile(e, v, 'msmeFile'); }
+  onPanFileSelect(e: any) {
+    this.readFile(e.target.files[0], f => this.newVendor.panFile = f);
+  }
 
-  private async saveFile(e: any, vendor: Vendor, key: 'gstFile' | 'panFile' | 'msmeFile') {
+  onMsmeFileSelect(e: any) {
+    this.readFile(e.target.files[0], f => this.newVendor.msmeFile = f);
+  }
+
+  onGstFileSelectFromTable(e: any, v: Vendor) {
+    this.saveFile(e, v, 'gstFile');
+  }
+
+  onPanFileSelectFromTable(e: any, v: Vendor) {
+    this.saveFile(e, v, 'panFile');
+  }
+
+  onMsmeFileSelectFromTable(e: any, v: Vendor) {
+    this.saveFile(e, v, 'msmeFile');
+  }
+
+  private async saveFile(
+    e: any,
+    vendor: Vendor,
+    key: 'gstFile' | 'panFile' | 'msmeFile'
+  ) {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -206,7 +286,29 @@ export class VendorComponent implements OnInit {
     });
   }
 
-  // ---------------- EXCEL IMPORT ----------------
+  async removeGSTFile(vendor: any) {
+    if (!confirm('Remove GST document?')) return;
+    vendor.gstFile = undefined;
+    const db = await this.dbService.openDB();
+    db.transaction('vendors', 'readwrite').objectStore('vendors').put(vendor);
+  }
+
+  async removePanFile(vendor: any) {
+    if (!confirm('Remove PAN document?')) return;
+    vendor.panFile = undefined;
+    const db = await this.dbService.openDB();
+    db.transaction('vendors', 'readwrite').objectStore('vendors').put(vendor);
+  }
+
+  async removeMSMEFile(vendor: any) {
+    if (!confirm('Remove MSME document?')) return;
+    vendor.msmeFile = undefined;
+    vendor.msme = '';
+    const db = await this.dbService.openDB();
+    db.transaction('vendors', 'readwrite').objectStore('vendors').put(vendor);
+  }
+
+  // ---------------- EXCEL ----------------
   handleExcel(event: any) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -228,39 +330,62 @@ export class VendorComponent implements OnInit {
     const tx = db.transaction('vendors', 'readwrite');
     const store = tx.objectStore('vendors');
 
+    let last = 0;
+    this.vendors.forEach(v => {
+      if (v.vendorId?.startsWith('VEN-')) {
+        const n = parseInt(v.vendorId.replace('VEN-', ''), 10);
+        if (!isNaN(n)) last = Math.max(last, n);
+      }
+    });
+
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      if (!r || !r[0]) continue;
+      if (!r || !r[2]) continue;
 
-      store.add({
-        vendorId: r[0] || 'V' + Date.now() + '_' + i,
-        vendorVertical: r[1] || '',    // ✅ SAME AS CUSTOMER
-        vendorType: r[2] || '',
-        companyName: r[3] || '',
-        category: r[4] || '',
-        brandName: r[5] || '',
-        contactPerson: r[6] || '',
-        address: r[7] || '',
+      last++;
+
+      await store.add({
+        vendorId: `VEN-${last.toString().padStart(3, '0')}`,
+        vendorVertical: r[0] || '',
+        vendorType: r[1] || '',
+        companyName: r[2] || '',
+        category: r[3] || '',
+        brandName: r[4] || '',
+        contactPerson: r[5] || '',
+        mobile: r[6] || '',
+        email: r[7] || '',
         website: r[8] || '',
-        email: r[9] || '',
-        mobile: r[10] || '',
-        gst: r[11] || '',
-        pan: r[12] || '',
-        msme: r[13] || '',
-        paymentTerms: r[14] || '',
-        product: r[15] || ''
+        billing: {
+          street: r[9] || '',
+          area: r[10] || '',
+          city: r[11] || '',
+          state: r[12] || '',
+          pincode: r[13] || '',
+          country: 'India'
+        },
+        shipping: {
+          street: r[14] || '',
+          area: r[15] || '',
+          city: r[16] || '',
+          state: r[17] || '',
+          pincode: r[18] || '',
+          country: 'India'
+        },
+        gst: r[19] || '',
+        pan: r[20] || '',
+        msme: r[21] || '',
+        paymentTerms: r[22] || '',
+        product: r[23] || ''
       });
     }
 
     tx.oncomplete = () => this.loadVendors();
   }
 
-  // ---------------- EXCEL EXPORT ----------------
   downloadExcel() {
     const ws = XLSX.utils.json_to_sheet(
       this.vendors.map(v => ({
-        'Vendor ID': v.vendorId || '',
-        'Vendor Vertical': v.vendorVertical || '',
+        'Vertical': v.vendorVertical || '',
         'Vendor Type': v.vendorType || '',
         'Company Name': v.companyName || '',
         'Category': v.category || '',
@@ -280,6 +405,4 @@ export class VendorComponent implements OnInit {
     XLSX.utils.book_append_sheet(wb, ws, 'Vendors');
     XLSX.writeFile(wb, 'Vendor-List.xlsx');
   }
-
-
 }

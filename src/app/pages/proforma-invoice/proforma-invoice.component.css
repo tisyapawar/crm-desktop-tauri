@@ -866,3 +866,132 @@ select:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px white inset;
   box-shadow: 0 0 0 1000px white inset;
 }
+
+/* ===============================
+   INQUIRY MODAL STYLES
+   =============================== */
+
+.inq-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.inq-modal {
+  background: #ffffff;
+  width: 700px;
+  max-width: 95%;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: fadeInScale 0.25s ease;
+}
+
+/* Header */
+.inq-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inq-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inq-title h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.inq-close {
+  background: #f1f5f9;
+  border: none;
+  font-size: 22px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.inq-close:hover {
+  background: #e2e8f0;
+}
+
+/* Body */
+.inq-modal-body {
+  padding: 20px 22px;
+}
+
+/* Table */
+.inq-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inq-table th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #64748b;
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inq-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+
+/* Items badge */
+.items-badge {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Use button */
+.use-btn {
+  background: #0f172a;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.use-btn:hover {
+  background: #020617;
+}
+
+/* Empty state */
+.no-inquiry-text {
+  text-align: center;
+  color: #64748b;
+  padding: 30px 0;
+}
+
+/* Animation */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+  }
+}

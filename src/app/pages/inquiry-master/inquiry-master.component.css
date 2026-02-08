@@ -196,14 +196,14 @@
 }
 
 .customer-name {
-  font-weight: 600;
-  color: #1a202c;
-  font-size: 14px;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .company-name {
-  font-size: 12px;
-  color: #64748b;
+  font-weight: 600;
+  color: #1a202c;
+  font-size: 14px;
 }
 
 /* Badges */

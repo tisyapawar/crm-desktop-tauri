@@ -44,10 +44,10 @@
           <td class="buyer-box">
             <div class="field-row">
               <strong>Buyer:</strong><br>
-              <select *ngIf="!isPrintMode" class="inv-input" [(ngModel)]="form.buyerId" (change)="onCustomerSelect()">
-                <option value="" disabled>Select Customer</option>
-                <option *ngFor="let c of customers" [value]="c.id">
-                  {{ c.name }} – {{ c.companyName }}
+              <select *ngIf="!isPrintMode" class="inv-input" [(ngModel)]="selectedCompany" (change)="onCompanySelect()">
+                <option value="" disabled>Select Company</option>
+                <option *ngFor="let c of companies" [value]="c">
+                  {{c}}
                 </option>
               </select>
               <span *ngIf="isPrintMode" class="print-value">{{ form.buyerName }}</span>
@@ -299,6 +299,59 @@
 
     </div>
   </div>
+
+  <!-- ===============================
+     INQUIRY SELECTION MODAL
+     =============================== -->
+  <div *ngIf="showInquiryPopup" class="inq-modal-overlay">
+
+    <div class="inq-modal">
+
+      <!-- Header -->
+      <div class="inq-modal-header">
+        <div class="inq-title">
+          <span class="inq-icon">📋</span>
+          <h3>Select Inquiry</h3>
+        </div>
+        <button class="inq-close" (click)="showInquiryPopup = false">×</button>
+      </div>
+
+      <!-- Body -->
+      <div class="inq-modal-body">
+
+        <table class="inq-table" *ngIf="filteredInquiries.length; else noInquiry">
+          <thead>
+            <tr>
+              <th>Inquiry No</th>
+              <th>Date</th>
+              <th>Items Count</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let inq of filteredInquiries">
+              <td>{{ getDisplayInquiryId(inq.id) }}</td>
+              <td>{{ inq.date }}</td>
+              <td>{{ inq.items?.length || 0 }}</td>
+              <td>
+                <button class="btn btn-primary" (click)="loadFromInquiry(inq); showInquiryPopup = false">
+                  + Use This
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <ng-template #noInquiry>
+          <p class="no-inquiry-text">No inquiries found for this company.</p>
+        </ng-template>
+
+      </div>
+
+    </div>
+  </div>
+
 
   <!-- CONTROL BUTTONS -->
   <div class="controls" *ngIf="!isPrintMode">

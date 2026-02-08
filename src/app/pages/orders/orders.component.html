@@ -3,7 +3,7 @@
   <div class="page-header">
     <div class="header-content">
       <h1 class="page-title">
-        {{ selectedFilter === 'previous' ? 'Completed Orders' : 'Orders Management' }}
+        {{ selectedFilter === 'completed' ? 'Completed Orders' : 'Orders Management' }}
       </h1>
       <p class="page-subtitle">Track and manage customer orders</p>
     </div>
@@ -22,7 +22,7 @@
       <select class="filter-select" [(ngModel)]="selectedFilter">
         <option value="offers">Offers Sent</option>
         <option value="ongoing">Ongoing Orders</option>
-        <option value="previous">Completed Orders</option>
+        <option value="completed">Completed Orders</option>
       </select>
     </div>
   </div>
@@ -87,16 +87,16 @@
                 (change)="updateStatus(order.id, $any($event.target).value)">
                 <option value="offers">Offers Sent</option>
                 <option value="ongoing">Ongoing</option>
-                <option value="previous">Completed</option>
+                <option value="completed">Completed</option>
               </select>
 
               <select *ngSwitchCase="'ongoing'" class="status-select" [value]="order.status"
                 (change)="updateStatus(order.id, $any($event.target).value)">
                 <option value="ongoing">Ongoing</option>
-                <option value="previous">Completed</option>
+                <option value="completed">Completed</option>
               </select>
 
-              <span *ngSwitchCase="'previous'" class="badge badge-completed">Completed</span>
+              <span *ngSwitchCase="'completed'" class="badge badge-completed">Completed</span>
             </ng-container>
           </td>
 
@@ -198,6 +198,7 @@
               Inquiry #{{ inq.no || inq.id }} |
               {{ inq.date }} |
               {{ inq.customerName }} |
+              {{ inq.companyName }} |
               {{
               inq.items.length === 1
               ? (inq.items[0].name + ' (' + inq.items[0].qty + ')')
@@ -220,13 +221,13 @@
 
         <div class="row-2">
           <div class="form-group">
-            <label class="form-label">Customer</label>
+            <label class="form-label">Company Name</label>
             <input type="text" class="form-input" [(ngModel)]="orderForm.customerName" name="customerName" />
           </div>
-          <div class="form-group">
+          <!-- <div class="form-group">
             <label class="form-label">Salesman</label>
             <input type="text" class="form-input" [(ngModel)]="orderForm.salesman" name="salesman" />
-          </div>
+          </div> -->
         </div>
       </div>
 
@@ -245,6 +246,8 @@
             <thead>
               <tr>
                 <th>Product</th>
+                <th>HSN</th>
+                <th>UOM</th>
                 <th style="width: 120px;">Qty</th>
                 <th style="width: 140px;">Rate (₹)</th>
                 <th style="width: 140px;">Amount (₹)</th>
@@ -255,6 +258,14 @@
               <tr *ngFor="let it of orderForm.items; let i=index">
                 <td>
                   <input type="text" class="table-input" [(ngModel)]="it.productName" [name]="'product-'+i"
+                    (input)="recalculateFormAmounts()" />
+                </td>
+                <td>
+                  <input type="number" class="table-input" style="width: 50px;" [(ngModel)]="it.hsn" [name]="'hsn-'+i"
+                    (input)="recalculateFormAmounts()" />
+                </td>
+                <td>
+                  <input type="text" class="table-input" style="width: 100px;" [(ngModel)]="it.uom" [name]="'uom-'+i"
                     (input)="recalculateFormAmounts()" />
                 </td>
                 <td>

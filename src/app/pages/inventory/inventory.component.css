@@ -608,7 +608,7 @@
 }
 
 /* Scroll Indicator */
-.table-container::after {
+/* .table-container::after {
   content: '← Scroll horizontally to view all columns →';
   display: block;
   text-align: center;
@@ -623,7 +623,7 @@
   left: 0;
   width: 100%;
   z-index: 5;
-}
+} */
 
 /* Hide scroll indicator when not needed */
 @media (min-width: 1600px) {
@@ -1115,4 +1115,39 @@ select:-webkit-autofill:focus {
 .actions-dropdown {
   position: relative;
   overflow: visible;
+}
+
+/* ===============================
+   SPECIFICATIONS (3 COLUMN ONLY)
+   =============================== */
+
+.specs-group {
+  margin-top: 8px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e6edf5;
+  border-radius: 12px;
+}
+
+.specs-group .row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.specs-group .form-group {
+  margin-bottom: 0;
+}
+
+.specs-group .form-sub-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.specs-group .form-input {
+  height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
 }

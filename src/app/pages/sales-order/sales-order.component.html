@@ -1,4 +1,131 @@
 <div class="sales-container">
+
+  <!-- ========================================
+       OFFER SELECTION MODAL
+       ======================================== -->
+  <div class="modal-overlay" *ngIf="showOfferModal" (click)="closeOfferModal()">
+    <div class="modal-container offer-modal" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-header-content">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="modal-icon">
+            <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <div>
+            <h3 class="modal-title">Select Completed Offer</h3>
+            <p class="modal-subtitle">{{ selectedCompanyForOffers }} - {{ availableOffers.length }} offer(s) available
+            </p>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeOfferModal()" type="button">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-container" *ngIf="isLoadingOffers">
+        <div class="spinner"></div>
+        <p>Loading offers...</p>
+      </div>
+
+      <!-- Offers List -->
+      <div class="modal-body" *ngIf="!isLoadingOffers && availableOffers.length > 0">
+        <div class="offers-grid">
+          <div class="offer-card" *ngFor="let offer of availableOffers" (click)="selectOffer(offer)">
+            <!-- Offer Header -->
+            <div class="offer-header">
+              <div class="offer-number">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M14 2H2v12h12V2z" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                <span class="offer-no">{{ offer.offerNo || offer.offerNumber || 'N/A' }}</span>
+              </div>
+              <span class="offer-status completed">{{ offer.status }}</span>
+            </div>
+
+            <!-- Offer Details -->
+            <div class="offer-details">
+              <div class="detail-row">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect x="1" y="3" width="12" height="10" rx="1" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M4 1v4M10 1v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                <span class="detail-label">Date:</span>
+                <span class="detail-value">{{ formatOfferDate(offer.offerDate || offer.date) }}</span>
+              </div>
+
+              <div class="detail-row">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M1 7h12M7 1v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                <span class="detail-label">Items:</span>
+                <span class="detail-value">{{ offer.items?.length || 0 }} item(s)</span>
+              </div>
+
+              <div class="detail-row">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                <span class="detail-label">Total:</span>
+                <span class="detail-value amount">₹{{ getOfferTotal(offer).toFixed(2) }}</span>
+              </div>
+            </div>
+
+            <!-- Items Preview -->
+            <div class="items-preview" *ngIf="offer.items && offer.items.length > 0">
+              <span class="preview-label">Items:</span>
+              <div class="preview-items">
+                <span class="preview-item" *ngFor="let item of offer.items.slice(0, 3)">
+                  {{ item.item || item.productName || item.name }}
+                </span>
+                <span class="preview-more" *ngIf="offer.items.length > 3">
+                  +{{ offer.items.length - 3 }} more
+                </span>
+              </div>
+            </div>
+
+            <!-- Select Button -->
+            <button class="btn-select-offer" type="button">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M13 4L6 11l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+              Select This Offer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Offers State -->
+      <div class="empty-state" *ngIf="!isLoadingOffers && availableOffers.length === 0">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="2" />
+          <path d="M32 20v16M32 44v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <h4>No Completed Offers Found</h4>
+        <p>There are no completed offers for this company.</p>
+        <p>You can create the sales order items manually.</p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="skipOfferSelection()" type="button">
+          Create Manually
+        </button>
+        <button class="btn btn-outline" (click)="closeOfferModal()" type="button">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Header Section -->
   <div class="page-header" *ngIf="!showForm">
     <div class="header-content">
@@ -52,6 +179,21 @@
             <label class="form-label">Sales Order Date</label>
             <input type="date" class="form-input" [(ngModel)]="salesOrderDate" name="salesOrderDate" />
           </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Select Company</label>
+            <select class="form-select" [(ngModel)]="selectedCompanyName" (ngModelChange)="onCompanySelected($event)"
+              name="companyName">
+              <option value="">-- Select Company --</option>
+              <option *ngFor="let company of getCompanyNames()" [value]="company">
+                {{ company }}
+              </option>
+            </select>
+            <small class="form-hint">Select a company to auto-fill details</small>
+          </div>
+          <div class="form-group"></div>
         </div>
 
         <div class="row-2">

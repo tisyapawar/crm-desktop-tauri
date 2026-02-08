@@ -56,9 +56,20 @@
                 </div>
 
                 <div class="row-2">
-                    <div class="form-group">
+                    <!-- <div class="form-group">
                         <label class="form-label">Vendor Name</label>
                         <input type="text" class="form-input" [(ngModel)]="vendorName" name="vendorName" />
+                    </div> -->
+                    <div class="form-group">
+                        <label class="form-label">Vendor Name</label>
+                        <select class="form-select" [(ngModel)]="selectedVendorId" name="selectedVendorId"
+                            (change)="onVendorSelect(selectedVendorId)">
+                            <option value="" disabled>Select Vendor</option>
+
+                            <option *ngFor="let v of vendors" [value]="v.vendorId">
+                                {{ v.companyName }}
+                            </option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Vendor Code / ID</label>

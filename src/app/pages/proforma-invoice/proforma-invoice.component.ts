@@ -18,6 +18,16 @@ export class ProformaInvoiceComponent implements OnInit {
   inquiries: any[] = [];
   proformas: any[] = [];
   isPrintMode = false;
+  showInquiryPopup = false;
+  buyerInquiries: any[] = [];
+  selectedBuyerId: number | null = null;
+  inventory: any[] = [];
+  companies: string[] = [];
+  selectedCompany = '';
+  filteredInquiries: any[] = [];
+  isEditing = false;
+  editingId: number | null = null;
+
 
   bankOptions = [
     {
@@ -66,7 +76,18 @@ export class ProformaInvoiceComponent implements OnInit {
     this.proformas = await this.db.getAll('proformas');
     console.log('📦 Proformas loaded:', this.proformas);
 
+    this.inventory = await this.db.getAll('inventory');
+    console.log('📦 Inventory loaded:', this.inventory);
+
     this.onBankChange();
+
+    this.companies = [
+      ...new Set(
+        this.inquiries
+          .map(i => i.companyName)
+          .filter(Boolean)
+      )
+    ];
   }
 
   onBankChange() {
@@ -78,82 +99,175 @@ export class ProformaInvoiceComponent implements OnInit {
     if (bank) this.form.bankDetails = { ...bank };
   }
 
+  // onCustomerSelect() {
+  //   console.log('👤 Customer dropdown changed');
+  //   console.log('➡ buyerId from form:', this.form.buyerId, typeof this.form.buyerId);
+
+  //   console.log('📦 Available customers:', this.customers);
+
+  //   const customer = this.customers.find(
+  //     c => String(c.id) === String(this.form.buyerId)
+  //   );
+
+  //   console.log('🎯 Matched customer:', customer);
+
+  //   if (!customer) {
+  //     console.warn('❌ No customer matched for buyerId');
+  //     return;
+  //   }
+
+  //   this.form.buyerName = customer.name || '';
+  //   this.form.buyerGST = customer.gstin || '';
+  //   this.form.buyerPAN = customer.pan || '';
+
+  //   this.form.buyerAddress =
+  //     `${customer.billing?.street || ''}, ` +
+  //     `${customer.billing?.area || ''}, ` +
+  //     `${customer.billing?.city || ''}, ` +
+  //     `${customer.billing?.state || ''}, ` +
+  //     `${customer.billing?.country || ''}`;
+
+  //   console.log('✅ Buyer fields set:', {
+  //     name: this.form.buyerName,
+  //     gst: this.form.buyerGST,
+  //     pan: this.form.buyerPAN,
+  //     address: this.form.buyerAddress
+  //   });
+  // }
+
   onCustomerSelect() {
-    console.log('👤 Customer dropdown changed');
-    console.log('➡ buyerId from form:', this.form.buyerId, typeof this.form.buyerId);
+    const buyerId = this.form.buyerId;
+    if (!buyerId) return;
 
-    console.log('📦 Available customers:', this.customers);
-
+    // 1️⃣ Set buyer details
     const customer = this.customers.find(
-      c => String(c.id) === String(this.form.buyerId)
+      c => String(c.id) === String(buyerId)
     );
 
-    console.log('🎯 Matched customer:', customer);
-
-    if (!customer) {
-      console.warn('❌ No customer matched for buyerId');
-      return;
+    if (customer) {
+      this.form.buyerName = customer.name || '';
+      this.form.buyerGST = customer.gstin || '';
+      this.form.buyerPAN = customer.pan || '';
+      this.form.buyerAddress =
+        `${customer.billing?.street || ''}, ` +
+        `${customer.billing?.area || ''}, ` +
+        `${customer.billing?.city || ''}, ` +
+        `${customer.billing?.state || ''}, ` +
+        `${customer.billing?.country || ''}`;
     }
 
-    this.form.buyerName = customer.name || '';
-    this.form.buyerGST = customer.gstin || '';
-    this.form.buyerPAN = customer.pan || '';
+    // 2️⃣ Filter inquiries from IndexedDB-loaded data
+    // this.buyerInquiries = this.inquiries.filter((inq: any) =>
+    //   String(inq.customerId) === String(buyerId)
+    // );
 
-    this.form.buyerAddress =
-      `${customer.billing?.street || ''}, ` +
-      `${customer.billing?.area || ''}, ` +
-      `${customer.billing?.city || ''}, ` +
-      `${customer.billing?.state || ''}, ` +
-      `${customer.billing?.country || ''}`;
+    this.buyerInquiries = this.inquiries.filter((inq: any) =>
+      inq.customerName?.trim().toLowerCase() ===
+      this.form.buyerName.trim().toLowerCase()
+      &&
+      inq.companyName?.trim().toLowerCase() ===
+      (this.customers.find(c => String(c.id) === String(buyerId))?.companyName || '')
+        .trim()
+        .toLowerCase()
+    );
 
-    console.log('✅ Buyer fields set:', {
-      name: this.form.buyerName,
-      gst: this.form.buyerGST,
-      pan: this.form.buyerPAN,
-      address: this.form.buyerAddress
-    });
+
+    // 3️⃣ Open popup if inquiries exist
+    if (this.buyerInquiries.length) {
+      this.showInquiryPopup = true;
+    }
   }
 
-  onInquirySelect() {
-    console.log('📄 Inquiry dropdown changed');
-    console.log('➡ inquiryId from form:', this.form.inquiryId, typeof this.form.inquiryId);
+  // onCompanySelect() {
+  //   if (!this.selectedCompany) return;
 
-    console.log('📦 Available inquiries:', this.inquiries);
+  //   this.filteredInquiries = this.inquiries.filter(inq =>
+  //     inq.companyName?.trim().toLowerCase() ===
+  //     this.selectedCompany.trim().toLowerCase()
+  //   );
 
-    const inq = this.inquiries.find(
-      i => String(i.id) === String(this.form.inquiryId)
+  //   console.log('Selected company:', this.selectedCompany);
+  //   console.log(
+  //     'Inquiry companies:',
+  //     this.inquiries.map(i => i.companyName)
+  //   );
+  //   console.log('Filtered inquiries:', this.filteredInquiries);
+
+  //   this.showInquiryPopup = true;
+  // }
+
+  onCompanySelect() {
+    if (!this.selectedCompany) return;
+
+    // 🔹 Find customer by company name
+    const customer = this.customers.find(c =>
+      c.companyName?.trim().toLowerCase() ===
+      this.selectedCompany.trim().toLowerCase()
     );
 
-    console.log('🎯 Matched inquiry:', inq);
+    if (customer) {
+      this.form.buyerName = customer.companyName; // 👈 COMPANY NAME on invoice
+      this.form.buyerGST = customer.gstin || '';
+      this.form.buyerPAN = customer.pan || '';
 
-    if (!inq) {
-      console.warn('❌ No inquiry matched for inquiryId');
-      return;
+      this.form.buyerAddress =
+        `${customer.billing?.street || ''}, ` +
+        `${customer.billing?.area || ''}, ` +
+        `${customer.billing?.city || ''}, ` +
+        `${customer.billing?.state || ''}, ` +
+        `${customer.billing?.country || ''}`;
     }
 
-    if (!inq.items || !inq.items.length) {
-      console.warn('⚠ Inquiry has no items:', inq);
-      return;
-    }
+    // 🔹 Filter inquiries by company
+    this.filteredInquiries = this.inquiries.filter(inq =>
+      inq.companyName?.trim().toLowerCase() ===
+      this.selectedCompany.trim().toLowerCase()
+    );
 
-    console.log('📦 Inquiry items:', inq.items);
+    console.log('Selected company:', this.selectedCompany);
+    console.log('Filtered inquiries:', this.filteredInquiries);
 
-    this.form.items = inq.items.map((it: any, index: number) => {
-      const mapped = {
-        description:
-          it.productName || '',
+    this.showInquiryPopup = true;
+  }
+
+  loadFromInquiry(inq: any) {
+    if (!inq || !inq.items?.length) return;
+
+    this.form.items = inq.items.map((it: any) => {
+
+      // 🔑 Match by DISPLAY NAME (same text as inquiry)
+      const inv = this.inventory.find(
+        p => p.displayName?.trim() === it.productName?.trim()
+      );
+
+      return {
+        // SAME name as inquiry
+        description: it.productName || '',
+
+        // From inventory
+        hsn: inv?.hsn || '',
+        rate: inv?.price || 0,   // ✅ FIXED
+
+        // From inquiry
         qty: it.qty || 0,
-        uom: it.uom || '',
-        rate: 0,
-        hsn: ''
+        uom: it.uom || ''
       };
-      console.log(`🧩 Mapped item ${index}:`, mapped);
-      return mapped;
     });
 
-    console.log('✅ Final items set on form:', this.form.items);
     this.calculateTotals();
   }
+
+
+  selectInquiry(inq: any) {
+    this.loadFromInquiry(inq);
+    this.showInquiryPopup = false;
+  }
+
+  getDisplayInquiryId(id?: number): string {
+    if (!id) return '-';
+    return `INQ-${String(id).padStart(4, '0')}`;
+  }
+
 
   addItem() {
     console.log('➕ Add item clicked');
@@ -179,16 +293,49 @@ export class ProformaInvoiceComponent implements OnInit {
   }
 
   // async save() {
-  //   console.log('💾 Saving proforma:', this.form);
+  //   // 🔥 IMPORTANT: Calculate totals before saving
+  //   this.calculateTotals();
+
+  //   // 🔥 IMPORTANT: Ensure all fields are present
+  //   const proformaToSave = {
+  //     ...this.form,
+  //     // Ensure these fields exist
+  //     items: this.form.items || [],
+  //     buyerName: this.form.buyerName || '',
+  //     buyerAddress: this.form.buyerAddress || '',
+  //     buyerGST: this.form.buyerGST || '',
+  //     buyerPAN: this.form.buyerPAN || '',
+  //     proformaNumber: this.form.proformaNumber || this.generatePFNo(),
+  //     date: this.form.date || new Date().toISOString().slice(0, 10),
+  //     // Include calculated totals
+  //     subTotal: this.form.subTotal || 0,
+  //     cgst: this.form.cgst || 0,
+  //     sgst: this.form.sgst || 0,
+  //     igst: this.form.igst || 0,
+  //     total: this.form.total || 0,
+  //     totalReceivable: this.form.totalReceivable || 0,
+  //     otherCharges: this.form.otherCharges || 0,
+  //     advance: this.form.advance || 0,
+  //     roundOff: this.form.roundOff || 0,
+  //     // Bank details
+  //     selectedBankKey: this.form.selectedBankKey || 'HDFC',
+  //     bankDetails: this.form.bankDetails || {},
+  //     // Other fields
+  //     paymentTerms: this.form.paymentTerms || '',
+  //     preparedBy: this.form.preparedBy || ''
+  //   };
+
+  //   console.log('💾 Saving proforma:', proformaToSave);
 
   //   // Save to DB
-  //   await this.db.add('proformas', this.form);
+  //   await this.db.add('proformas', proformaToSave);
 
   //   // 🔥 IMPORTANT: update UI list immediately
   //   this.proformas = await this.db.getAll('proformas');
 
   //   console.log('📋 Proformas list updated:', this.proformas);
 
+  //   // Reset form
   //   this.form = {
   //     buyerId: '',
   //     buyerName: '',
@@ -204,98 +351,14 @@ export class ProformaInvoiceComponent implements OnInit {
 
   //   this.onBankChange();
 
-  //   // Optional: keep form as-is OR reset (your choice)
-  // }
-
-
-  // downloadPDF(p?: any) {
-
-  //   const target = p ? p : this.form; // download specific or current
-
-  //   this.form = target; // temporarily load form so html2canvas captures correctly
-
-  //   setTimeout(() => {
-  //     this.generatePDF();
-  //   }, 50);
-  // }
-
-  // downloadPDF(p?: any) {
-  //   if (p) {
-  //     this.form = { ...p };
-  //   }
-
-  //   // 🔥 switch to print mode
-  //   this.isPrintMode = true;
-
-  //   setTimeout(() => {
-  //     this.generatePDF();
-  //   }, 300);
-  // }
-
-  // async downloadPDF(p?: any) {
-
-  //   // 1️⃣ Load proforma into form
-  //   if (p) {
-  //     this.form = { ...p };
-  //   }
-
-  //   // 2️⃣ RE-HYDRATE CUSTOMER DATA
-  //   if (this.form.buyerId) {
-  //     const customer = this.customers.find(
-  //       c => String(c.id) === String(this.form.buyerId)
-  //     );
-
-  //     if (customer) {
-  //       this.form.buyerName = customer.name || '';
-  //       this.form.buyerGST = customer.gstin || '';
-  //       this.form.buyerPAN = customer.pan || '';
-  //       this.form.buyerAddress =
-  //         `${customer.billing?.street || ''}, ` +
-  //         `${customer.billing?.area || ''}, ` +
-  //         `${customer.billing?.city || ''}, ` +
-  //         `${customer.billing?.state || ''}, ` +
-  //         `${customer.billing?.country || ''}`;
-  //     }
-  //   }
-
-  //   // 3️⃣ RE-HYDRATE INQUIRY ITEMS
-  //   if (this.form.inquiryId) {
-  //     const inq = this.inquiries.find(
-  //       i => String(i.id) === String(this.form.inquiryId)
-  //     );
-
-  //     if (inq?.items?.length) {
-  //       this.form.items = inq.items.map((it: any) => ({
-  //         description: it.productName || '',
-  //         qty: it.qty || 0,
-  //         uom: it.uom || '',
-  //         rate: 0,
-  //         hsn: ''
-  //       }));
-  //     }
-  //   }
-
-  //   // 4️⃣ RE-HYDRATE BANK DETAILS
-  //   this.onBankChange();
-
-  //   // 5️⃣ Switch to print mode
-  //   this.isPrintMode = true;
-
-  //   // 6️⃣ Let DOM settle
-  //   setTimeout(() => {
-  //     this.generatePDF();
-  //     this.isPrintMode = false; // reset after print
-  //   }, 300);
+  //   alert('Proforma saved successfully!');
   // }
 
   async save() {
-    // 🔥 IMPORTANT: Calculate totals before saving
     this.calculateTotals();
 
-    // 🔥 IMPORTANT: Ensure all fields are present
-    const proformaToSave = {
+    const proformaToSave: any = {
       ...this.form,
-      // Ensure these fields exist
       items: this.form.items || [],
       buyerName: this.form.buyerName || '',
       buyerAddress: this.form.buyerAddress || '',
@@ -303,7 +366,7 @@ export class ProformaInvoiceComponent implements OnInit {
       buyerPAN: this.form.buyerPAN || '',
       proformaNumber: this.form.proformaNumber || this.generatePFNo(),
       date: this.form.date || new Date().toISOString().slice(0, 10),
-      // Include calculated totals
+
       subTotal: this.form.subTotal || 0,
       cgst: this.form.cgst || 0,
       sgst: this.form.sgst || 0,
@@ -313,25 +376,27 @@ export class ProformaInvoiceComponent implements OnInit {
       otherCharges: this.form.otherCharges || 0,
       advance: this.form.advance || 0,
       roundOff: this.form.roundOff || 0,
-      // Bank details
+
       selectedBankKey: this.form.selectedBankKey || 'HDFC',
       bankDetails: this.form.bankDetails || {},
-      // Other fields
+
       paymentTerms: this.form.paymentTerms || '',
       preparedBy: this.form.preparedBy || ''
     };
 
-    console.log('💾 Saving proforma:', proformaToSave);
+    if (this.isEditing && this.editingId != null) {
+      proformaToSave.id = this.editingId;
+      await this.db.put('proformas', proformaToSave);
+    } else {
+      await this.db.add('proformas', proformaToSave);
+    }
 
-    // Save to DB
-    await this.db.add('proformas', proformaToSave);
-
-    // 🔥 IMPORTANT: update UI list immediately
     this.proformas = await this.db.getAll('proformas');
 
-    console.log('📋 Proformas list updated:', this.proformas);
+    // Reset state
+    this.isEditing = false;
+    this.editingId = null;
 
-    // Reset form
     this.form = {
       buyerId: '',
       buyerName: '',
@@ -403,11 +468,25 @@ export class ProformaInvoiceComponent implements OnInit {
     }, 1000);
   }
 
+  // edit(p: any) {
+  //   console.log('✏️ Edit clicked for proforma:', p);
+  //   this.form = { ...p };
+  //   this.onBankChange();
+  // }
+
   edit(p: any) {
-    console.log('✏️ Edit clicked for proforma:', p);
-    this.form = { ...p };
-    this.onBankChange();
+    this.isEditing = true;
+    this.editingId = p.id;
+
+    // Deep clone to avoid live table mutation
+    this.form = JSON.parse(JSON.stringify(p));
+
+    // Restore selected company dropdown
+    this.selectedCompany = this.form.buyerName;
+
+    this.calculateTotals();
   }
+
 
   async deleteProforma(p: any) {
     console.log('🗑️ Delete clicked for proforma:', p);
@@ -420,46 +499,6 @@ export class ProformaInvoiceComponent implements OnInit {
 
     console.log('📋 Proformas list after delete:', this.proformas);
   }
-
-
-  // async generatePDF() {
-  //   this.calculateTotals();
-  //   this.loading = true;
-  //   try {
-  //     // const DATA: HTMLElement | null = document.getElementById('invoice-area');
-  //     const DATA = document.querySelector('#invoice-area') as HTMLElement;
-  //     if (!DATA) { alert('Invoice area not found'); this.loading = false; return; }
-  //     (document.activeElement as HTMLElement)?.blur();
-
-  //     const canvas = await html2canvas(DATA, { scale: 3, useCORS: true, allowTaint: true });
-  //     const imgData = canvas.toDataURL('image/png');
-
-  //     const pdf = new jsPDF('p', 'mm', 'a4');
-  //     const pageWidthMM = 210;
-  //     const pageHeightMM = 297;
-
-  //     // Compute image size in mm maintaining aspect ratio
-  //     let imgWidthMM = pageWidthMM;
-  //     let imgHeightMM = (canvas.height * imgWidthMM) / canvas.width;
-
-  //     // If taller than page, scale down to fit height
-  //     if (imgHeightMM > pageHeightMM) {
-  //       const scale = pageHeightMM / imgHeightMM;
-  //       imgWidthMM = imgWidthMM * scale;
-  //       imgHeightMM = imgHeightMM * scale;
-  //     }
-
-  //     const x = (pageWidthMM - imgWidthMM) / 2;
-  //     const y = 0;
-  //     pdf.addImage(imgData, 'PNG', x, y, imgWidthMM, imgHeightMM);
-  //     pdf.save(`${this.form.proformaNumber}.pdf`);
-  //   } catch (err: any) {
-  //     console.error('PDF Error', err);
-  //     alert('PDF Error. See console.');
-  //   } finally {
-  //     this.loading = false;
-  //   }
-  // }
 
   generatePFNo() {
     const year = new Date().getFullYear();
@@ -480,59 +519,6 @@ export class ProformaInvoiceComponent implements OnInit {
     if (this.db.addInvoice) await this.db.addInvoice(invoice);
     alert('Converted to Invoice (if backend exists)');
   }
-
-  // async generatePDF() {
-  //   this.calculateTotals();
-  //   this.loading = true;
-
-  //   try {
-  //     // 🔥 Ensure inputs lose focus
-  //     (document.activeElement as HTMLElement)?.blur();
-
-  //     // 🔥 Allow DOM to paint
-  //     await new Promise(r => setTimeout(r, 100));
-
-  //     const DATA = document.querySelector('#invoice-area') as HTMLElement;
-  //     if (!DATA) {
-  //       alert('Invoice area not found');
-  //       return;
-  //     }
-
-  //     const canvas = await html2canvas(DATA, {
-  //       scale: 3,
-  //       useCORS: true,
-  //       backgroundColor: '#ffffff'
-  //     });
-
-  //     const imgData = canvas.toDataURL('image/png');
-
-  //     const pdf = new jsPDF('p', 'mm', 'a4');
-  //     const pageWidthMM = 210;
-  //     const pageHeightMM = 297;
-
-  //     let imgWidthMM = pageWidthMM;
-  //     let imgHeightMM = (canvas.height * imgWidthMM) / canvas.width;
-
-  //     if (imgHeightMM > pageHeightMM) {
-  //       const scale = pageHeightMM / imgHeightMM;
-  //       imgWidthMM *= scale;
-  //       imgHeightMM *= scale;
-  //     }
-
-  //     const x = (pageWidthMM - imgWidthMM) / 2;
-  //     pdf.addImage(imgData, 'PNG', x, 0, imgWidthMM, imgHeightMM);
-
-  //     pdf.save(`${this.form.proformaNumber || 'Proforma'}.pdf`);
-  //   } catch (err) {
-  //     console.error('PDF Error', err);
-  //     alert('PDF Error. See console.');
-  //   } finally {
-  //     this.loading = false;
-  //     this.isPrintMode = false;
-  //   }
-  // }
-
-  // Replace your generatePDF() method with this:
 
   async generatePDF() {
     this.calculateTotals();

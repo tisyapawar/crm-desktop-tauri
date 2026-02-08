@@ -20,12 +20,38 @@ export class CustomersComponent {
   isEditing = false;
   editingIndex: number | null = null;
   newCustomer: any = this.getEmptyCustomer();
+  sameAsBilling = false; // Flag for "Same as Billing Address" checkbox
 
   businessVerticals: string[] = [
     'Projects',
     'Material Distribution Division',
     'Both'
   ];
+
+  // Copy billing address to shipping address
+  copyBillingToShipping() {
+    if (this.sameAsBilling) {
+      this.newCustomer.shipping = {
+        street: this.newCustomer.billing.street,
+        area: this.newCustomer.billing.area,
+        pincode: this.newCustomer.billing.pincode,
+        city: this.newCustomer.billing.city,
+        state: this.newCustomer.billing.state,
+        country: this.newCustomer.billing.country
+      };
+    } else {
+      // Clear shipping address when unchecked
+      this.newCustomer.shipping = {
+        street: '',
+        area: '',
+        pincode: '',
+        city: '',
+        state: '',
+        country: ''
+      };
+    }
+  }
+
   onPanFileSelect(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -67,7 +93,7 @@ export class CustomersComponent {
 
     const reader = new FileReader();
     reader.onload = () => {
-      this.newCustomer.panFile = {
+      this.newCustomer.gstFile = {
         name: file.name,
         type: file.type,
         data: reader.result as string
@@ -75,17 +101,19 @@ export class CustomersComponent {
     };
     reader.readAsDataURL(file);
   }
+
   async onGSTFileSelectFromTable(event: any, customer: any) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async () => {
-      customer.GSTFile = {
+      customer.gstFile = {
         name: file.name,
         type: file.type,
         data: reader.result as string
       };
+
 
       // 🔐 persist immediately
       const db = await this.dbService.openDB();
@@ -96,18 +124,45 @@ export class CustomersComponent {
     reader.readAsDataURL(file);
   }
 
+  async removePanFile(customer: any) {
+    if (!confirm('Remove PAN document?')) return;
+
+    customer.panFile = undefined;
+
+    const db = await this.dbService.openDB();
+    const tx = db.transaction('customers', 'readwrite');
+    const store = tx.objectStore('customers');
+    await store.put(customer);
+  }
+
+  async removeGSTFile(customer: any) {
+    if (!confirm('Remove GST document?')) return;
+
+    customer.gstFile = undefined;
+
+    console.log(customer.gstFile)
+
+    const db = await this.dbService.openDB();
+    const tx = db.transaction('customers', 'readwrite');
+    const store = tx.objectStore('customers');
+    await store.put(customer);
+  }
+
+  async removeMSMEFile(customer: any) {
+    if (!confirm('Remove MSME document?')) return;
+
+    customer.msmeFile = undefined;
+    customer.msme = '';
+
+    const db = await this.dbService.openDB();
+    const tx = db.transaction('customers', 'readwrite');
+    const store = tx.objectStore('customers');
+    await store.put(customer);
+  }
 
   constructor(private router: Router, private dbService: DBService) {
     this.loadFromIndexedDB();
   }
-
-  // generateCustomerId() {
-  //   const year = new Date().getFullYear();
-  //   const seq = Math.floor((Date.now() % 100000) / 10)
-  //     .toString()
-  //     .padStart(4, '0');
-  //   return `CUS/${year}/${seq}`;
-  // }
 
   generateCustomerId(customers: any[]): string {
     let maxNumber = 0;
@@ -125,13 +180,25 @@ export class CustomersComponent {
     return `CUS-${nextNumber.toString().padStart(3, '0')}`;
   }
 
+  getLastCustomerNumber(customers: any[]): number {
+    let max = 0;
+    customers.forEach(c => {
+      if (c.customerId?.startsWith('CUS-')) {
+        const n = parseInt(c.customerId.replace('CUS-', ''), 10);
+        if (!isNaN(n)) max = Math.max(max, n);
+      }
+    });
+    return max;
+  }
+
 
   getEmptyCustomer() {
     return {
       id: undefined,
-      customerId: '', // ❗ DO NOT generate ID here
+      customerId: '',
       name: '',
       companyName: '',
+      website: '',
       email: '',
       mobile: '',
       gstin: '',
@@ -154,27 +221,37 @@ export class CustomersComponent {
     const getAllRequest = store.getAll();
     getAllRequest.onsuccess = () => {
       const all = getAllRequest.result;
-      this.customers = all;
-      console.log('Loaded customers from IndexedDB:', this.customers);
+
+      this.customers = all.map(c => ({
+        ...c,
+        billing: c.billing || {
+          street: '', area: '', pincode: '', city: '', state: '', country: ''
+        },
+        shipping: c.shipping || {
+          street: '', area: '', pincode: '', city: '', state: '', country: ''
+        }
+      }));
+
+      console.log('Loaded customers (normalized):', this.customers);
     };
 
   }
 
-  async openDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('crm-db', 5);
+  // async openDB(): Promise<IDBDatabase> {
+  //   return new Promise((resolve, reject) => {
+  //     const request = indexedDB.open('crm-db', 5);
 
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains('customers')) {
-          db.createObjectStore('customers', { keyPath: 'id', autoIncrement: true });
-        }
-      };
+  //     request.onupgradeneeded = () => {
+  //       const db = request.result;
+  //       if (!db.objectStoreNames.contains('customers')) {
+  //         db.createObjectStore('customers', { keyPath: 'id', autoIncrement: true });
+  //       }
+  //     };
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
+  //     request.onsuccess = () => resolve(request.result);
+  //     request.onerror = () => reject(request.error);
+  //   });
+  // }
 
   filteredCustomers() {
     return this.customers.filter(c => {
@@ -187,21 +264,29 @@ export class CustomersComponent {
     this.isEditing = false;
     this.showModal = true;
     this.newCustomer = this.getEmptyCustomer();
+    this.sameAsBilling = false; // Reset checkbox
     this.dbService.getAll('customers').then(customers => {
       this.newCustomer.customerId = this.generateCustomerId(customers);
     });
   }
 
   openEditModal(index: number) {
+
+    const c = JSON.parse(JSON.stringify(this.customers[index]));
+
+    c.billing = c.billing || { street: '', area: '', pincode: '', city: '', state: '', country: '' };
+    c.shipping = c.shipping || { street: '', area: '', pincode: '', city: '', state: '', country: '' };
     this.newCustomer = JSON.parse(JSON.stringify(this.customers[index]));
     this.isEditing = true;
     this.editingIndex = index;
+    this.sameAsBilling = false; // Reset checkbox
     this.showModal = true;
   }
 
   cancelModal() {
     this.showModal = false;
     this.newCustomer = this.getEmptyCustomer();
+    this.sameAsBilling = false; // Reset checkbox
   }
 
   async submitForm() {
@@ -292,8 +377,9 @@ export class CustomersComponent {
     this.customers = [];
   }
 
+
   onFileChange(evt: any) {
-    const target: DataTransfer = <DataTransfer>evt.target;
+    const target: DataTransfer = evt.target;
     if (target.files.length !== 1) return;
 
     const reader = new FileReader();
@@ -304,53 +390,76 @@ export class CustomersComponent {
       const ws = wb.Sheets[wsname];
       const data = utils.sheet_to_json(ws);
 
-      const formatted = data.map((row: any) => ({
-        id: Date.now() + Math.random(),
-        name: row['Name'] || '',
-        companyName: row['Company Name'] || '',
-        email: row['Email'] || '',
-        mobile: row['Mobile'] || '',
-        gstin: row['GSTIN'] || '',
-        GSTFile: undefined, // ✅ ADD THIS
-        pan: row['PAN'] || '',
-        msme: row['MSME'] || '',
-        msmeFile: undefined,
-        billing: {
-          street: row['Billing Street'] || '',
-          area: row['Billing Area'] || '',
-          pincode: row['Billing Pincode'] || '',
-          city: row['Billing City'] || '',
-          state: row['Billing State'] || '',
-          country: row['Billing Country'] || '',
-        },
-        shipping: {
-          street: row['Shipping Street'] || '',
-          area: row['Shipping Area'] || '',
-          pincode: row['Shipping Pincode'] || '',
-          city: row['Shipping City'] || '',
-          state: row['Shipping State'] || '',
-          country: row['Shipping Country'] || '',
-        },
-      }));
+      // 🔹 get existing customers FIRST
+      const existingCustomers = await this.dbService.getAll('customers');
 
+      let lastNumber = this.getLastCustomerNumber(existingCustomers);
+
+      const formatted = data.map((row: any) => {
+        lastNumber++;   //  increment for EACH row
+
+        return {
+          id: Date.now() + Math.random(),
+          customerId: `CUS-${lastNumber.toString().padStart(3, '0')}`,
+          name: row['Name'] || '',
+          companyName: row['Company Name'] || '',
+          email: row['Email'] || '',
+          mobile: row['Mobile'] || '',
+          website: row['Website'] || '',
+          gstin: row['GSTIN'] || '',
+          pan: row['PAN'] || '',
+          msme: row['MSME'] || '',
+          businessVertical: row['Vertical'] || '',  // Added missing field
+
+          billing: {
+            street: row['Billing Street'] || '',
+            area: row['Billing Area'] || '',
+            pincode: row['Billing Pincode'] || '',
+            city: row['Billing City'] || '',
+            state: row['Billing State'] || '',
+            country: row['Billing Country'] || '',
+          },
+
+          shipping: {
+            street: row['Shipping Street'] || '',
+            area: row['Shipping Area'] || '',
+            pincode: row['Shipping Pincode'] || '',
+            city: row['Shipping City'] || '',
+            state: row['Shipping State'] || '',
+            country: row['Shipping Country'] || '',
+          },
+        };
+      });
+
+
+      // 🔹 SAVE WITHOUT CLEARING
       const db = await this.dbService.openDB();
       const tx = db.transaction('customers', 'readwrite');
       const store = tx.objectStore('customers');
-      store.clear();
-      formatted.forEach(c => store.add(c));
-      this.customers = formatted;
+
+      for (const c of formatted) {
+        await store.add(c);
+        existingCustomers.push(c); // keep local copy in sync
+      }
+
+      // 🔹 Update UI
+      this.customers = existingCustomers;
     };
+
     reader.readAsBinaryString(target.files[0]);
   }
+
 
   downloadExcel() {
     this.dbService.getAll('customers').then((customers: any[]) => {
 
       const formattedCustomers = customers.map(c => ({
+        'Vertical': c.businessVertical || '',
         'Name': c.name || '',
         'Company Name': c.companyName || '',
         'Email': c.email || '',
         'Mobile': c.mobile || '',
+        'Website': c.website || '',
         'GSTIN': c.gstin || '',
         'PAN': c.pan || '',
         'MSME': c.msme || '',

@@ -154,6 +154,14 @@ export class InventoryComponent implements OnInit {
       return;
     }
 
+    this.form.specifications = [
+      this.form.thickness ? `Thickness: ${this.form.thickness}` : null,
+      this.form.density ? `Density: ${this.form.density}` : null,
+      this.form.size ? `Size: ${this.form.size}` : null
+    ]
+      .filter(Boolean)
+      .join(' | ');
+
     try {
       const allProducts = await this.dbService.getAll('inventory');
 

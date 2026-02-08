@@ -14,6 +14,7 @@ import autoTable from 'jspdf-autotable';
 interface InquiryItem {
   productName?: string;
   make?: string;
+  hsn?: string;
 
   form?: string;
   density?: string;
@@ -32,25 +33,52 @@ interface FollowUpEntry {
 
 interface InquiryRecord {
   id?: number;
-  // no?: number;
   date: string;
+
+  // 🔹 COMPANY FIRST
+  companyName?: string;
+
+  // 🔹 AUTO-FILLED FROM CUSTOMER
   customerName: string;
   customerPhone?: string;
-  // salesman?: string;
+  email?: string;
+  mobile?: string;
+
+  billing?: {
+    street?: string;
+    area?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    country?: string;
+  };
+
+  shipping?: {
+    street?: string;
+    area?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    country?: string;
+  };
+
   items: InquiryItem[];
   notes?: string;
   followUps: FollowUpEntry[];
+
   inquiryType?: string;
-  companyName?: string;
   decision?: 'Accepted' | 'Rejected';
   rejectionReason?: string;
+
   lost?: {
     reason: string;
     remarks: string;
     date: string;
   };
+
   status?: string;
 }
+
 
 @Component({
   selector: 'app-inquiry-master',
@@ -84,6 +112,7 @@ export class InquiryMasterComponent {
   lostReasonText: string = '';
   lostRemarksText: string = '';
   customers: any[] = [];
+  inventory: any[] = [];
 
   constructor(
     private dbService: DBService,
@@ -123,6 +152,122 @@ export class InquiryMasterComponent {
   ----------------------------- */
   async openDB(): Promise<IDBDatabase> {
     return this.dbService.openDB();
+  }
+
+
+  ngOnInit() {
+    this.loadInquiries();
+    this.loadCustomers();
+    this.loadInventory();
+  }
+
+  /* -----------------------------
+     LOAD CUSTOMERS
+  ----------------------------- */
+
+  async loadCustomers() {
+    const db = await this.dbService.openDB();
+    const tx = db.transaction('customers', 'readonly');
+    const store = tx.objectStore('customers');
+
+    store.getAll().onsuccess = (e: any) => {
+      this.customers = e.target.result || [];
+    };
+  }
+
+  /* -----------------------------
+     COMPANY SELECTION
+  ----------------------------- */
+  onCompanySelect() {
+    if (!this.currentInquiry) return;
+
+    const customer = this.customers.find(
+      c => c.companyName === this.currentInquiry!.companyName
+    );
+
+    if (!customer) return;
+
+    this.currentInquiry.customerName = customer.name || '';
+    this.currentInquiry.customerPhone = customer.mobile || '';
+    this.currentInquiry.email = customer.email || '';
+
+    this.currentInquiry.billing = customer.billing
+      ? { ...customer.billing }
+      : {};
+
+    this.currentInquiry.shipping = customer.shipping
+      ? { ...customer.shipping }
+      : {};
+  }
+
+  /* -----------------------------
+   LOAD INVENTORY
+----------------------------- */
+  async loadInventory() {
+    const db = await this.dbService.openDB();
+    const tx = db.transaction('inventory', 'readonly');
+    const store = tx.objectStore('inventory');
+
+    store.getAll().onsuccess = (e: any) => {
+      this.inventory = e.target.result || [];
+    };
+  }
+
+  /* -----------------------------
+    PRODUCT SELECTION
+  ----------------------------- */
+
+  // onProductSelect(item: any) {
+  //   if (!item.productName) return;
+
+  //   // 🔍 Find inventory by NAME KEY (dropdown value)
+  //   const product = this.inventory.find(
+  //     p => p.name === item.productName
+  //   );
+
+  //   if (!product) return;
+
+  //   // ✅ SAVE DISPLAY NAME (what user sees)
+  //   item.productName = product.displayName;
+
+  //   // ✅ Autofill rest (unchanged)
+  //   item.make = product.productMake || '';
+  //   item.uom = product.unit || 'Nos';
+
+  //   if (product.size) {
+  //     const parts = product.size.split(',');
+  //     item.density = parts[0]?.trim() || '';
+  //     item.thickness = parts[1]?.trim() || '';
+  //   }
+
+  //   item.form = product.category || '';
+  //   item.fsk = product.specifications || '';
+  // }
+
+  onProductSelect(it: any) {
+    const selected = this.inventory.find((p: any) => {
+      const invName = (p.displayName || p.name || '').toLowerCase().trim();
+      const selName = (it.productName || '').toLowerCase().trim();
+      return invName === selName;
+    });
+
+    if (!selected) {
+      console.log('⚠️ Product not found in inventory:', it.productName);
+      return;
+    }
+
+    console.log('✅ Selected product:', selected);
+    console.log('📦 Product unit:', selected.unit);
+
+    // Auto-fill all product details
+    it.make = selected.productMake || '';
+    it.hsn = selected.hsn || '';
+    it.form = selected.category || '';
+    it.density = selected.density || '';
+    it.thickness = selected.size || '';
+    it.uom = selected.unit || 'Nos'; // Default to 'Nos' if unit is missing
+
+    console.log('✅ Item after auto-fill:', it);
   }
 
   /* -----------------------------
@@ -169,19 +314,6 @@ export class InquiryMasterComponent {
   /* -----------------------------
      SEARCH
   ----------------------------- */
-  // searchInquiries() {
-  //   const term = this.searchTerm?.toLowerCase().trim();
-
-  //   if (!term) {
-  //     this.filteredInquiries = [...this.inquiries];
-  //     return;
-  //   }
-
-  //   this.filteredInquiries = this.inquiries.filter(inq =>
-  //     inq.customerName?.toLowerCase().includes(term) ||
-  //     inq.companyName?.toLowerCase().includes(term)
-  //   );
-  // }
 
   searchInquiries() {
     const term = this.searchTerm?.toLowerCase().trim();
@@ -215,17 +347,18 @@ export class InquiryMasterComponent {
   openAddModal() {
     this.isEditing = false;
     this.showAddEditModal = true;
-
     this.currentInquiry = {
-      // id: number,
-      date: '',
+      date: new Date().toISOString().slice(0, 10),
+      companyName: '',
       customerName: '',
       customerPhone: '',
-      // salesman: '',
-      // items: [{ name: '', qty: 1, description: '' }],
+      email: '',
+      billing: {},
+      shipping: {},
       items: [{
         productName: '',
         make: '',
+        hsn: '',
         form: '',
         density: '',
         thickness: '',
@@ -233,7 +366,6 @@ export class InquiryMasterComponent {
         qty: 1,
         uom: 'Nos'
       }],
-
       notes: '',
       followUps: []
     };
@@ -257,6 +389,7 @@ export class InquiryMasterComponent {
     this.currentInquiry.items.push({
       productName: '',
       make: '',
+      hsn: '',
       form: '',
       density: '',
       thickness: '',
@@ -540,6 +673,7 @@ export class InquiryMasterComponent {
       head: [[
         'Product',
         'Make',
+        'HSN',
         'Specs',
         'Qty',
         'UOM'
@@ -547,6 +681,7 @@ export class InquiryMasterComponent {
       body: inq.items.map(it => [
         it.productName || '',
         it.make || '',
+        it.hsn || '',
         `${it.form || ''} ${it.density || ''} ${it.thickness || ''} ${it.fsk || ''}`.trim(),
         it.qty ?? '',
         it.uom || ''
@@ -592,4 +727,3 @@ export class InquiryMasterComponent {
   }
 
 }
-

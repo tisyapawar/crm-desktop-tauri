@@ -32,20 +32,118 @@
 
         <div class="row-2">
           <div class="form-group">
-            <label class="form-label">Customer <span class="required">*</span></label>
+            <label class="form-label">Company Name <span class="required">*</span></label>
             <select class="form-select" [(ngModel)]="selectedCustomer" (ngModelChange)="onCustomerChange()"
               name="customer">
-              <option [ngValue]="null">Select Customer</option>
-              <option *ngFor="let c of customers" [ngValue]="c">{{ c.name }}</option>
+              <option [ngValue]="null">Select Company</option>
+              <option *ngFor="let c of customers" [ngValue]="c">{{ c.companyName || c.name }}</option>
             </select>
           </div>
 
           <div class="form-group">
             <label class="form-label">Business Vertical</label>
-            <select class="form-select" [(ngModel)]="offer.businessVertical" name="vertical">
-              <option value="">Select Vertical</option>
-              <option *ngFor="let v of businessVerticals">{{ v }}</option>
-            </select>
+            <input type="text" class="form-input" [(ngModel)]="offer.businessVertical" name="vertical"
+              placeholder="Auto-filled from customer" readonly
+              style="background-color: #f7fafc; cursor: not-allowed;" />
+          </div>
+        </div>
+      </div>
+
+      <!-- INQUIRY INFORMATION (Read-only) -->
+      <div class="section-card" *ngIf="selectedInquiry">
+        <h3 class="section-header">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M9 5H7a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Inquiry Details (Reference)
+        </h3>
+
+        <!-- Basic Inquiry Info -->
+        <div class="row-3">
+          <div class="form-group">
+            <label class="form-label">Inquiry No</label>
+            <input type="text" class="form-input" [value]="getDisplayInquiryId(selectedInquiry.id)" readonly
+              style="background-color: #f7fafc; cursor: not-allowed;" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Inquiry Date</label>
+            <input type="text" class="form-input" [value]="selectedInquiry.date" readonly
+              style="background-color: #f7fafc; cursor: not-allowed;" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Inquiry Type</label>
+            <input type="text" class="form-input" [value]="selectedInquiry.inquiryType || '-'" readonly
+              style="background-color: #f7fafc; cursor: not-allowed;" />
+          </div>
+        </div>
+
+        <!-- Customer Info from Inquiry -->
+        <div class="row-2">
+          <div class="form-group">
+            <label class="form-label">Customer Name (from Inquiry)</label>
+            <input type="text" class="form-input" [value]="selectedInquiry.customerName" readonly
+              style="background-color: #f7fafc; cursor: not-allowed;" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Customer Phone</label>
+            <input type="text" class="form-input" [value]="selectedInquiry.customerPhone || '-'" readonly
+              style="background-color: #f7fafc; cursor: not-allowed;" />
+          </div>
+        </div>
+
+        <!-- Inquiry Items Table (Read-only) -->
+        <div class="form-group">
+          <label class="form-label">Inquiry Items ({{ selectedInquiry.items.length }} items)</label>
+          <div class="inquiry-items-wrapper">
+            <table class="items-table-readonly">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">Product Name</th>
+                  <th style="width: 15%;">Make/Brand</th>
+                  <th style="width: 12%;">Form</th>
+                  <th style="width: 12%;">Density</th>
+                  <th style="width: 12%;">Thickness</th>
+                  <th style="width: 10%;">FSK</th>
+                  <th style="width: 8%;">Qty</th>
+                  <th style="width: 6%;">UOM</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of selectedInquiry.items">
+                  <td><strong>{{ item.productName || '-' }}</strong></td>
+                  <td>{{ item.make || '-' }}</td>
+                  <td>{{ item.form || '-' }}</td>
+                  <td>{{ item.density || '-' }}</td>
+                  <td>{{ item.thickness || '-' }}</td>
+                  <td>{{ item.fsk || '-' }}</td>
+                  <td class="text-center">{{ item.qty || '-' }}</td>
+                  <td class="text-center">{{ item.uom || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Notes (if any) -->
+        <div class="form-group" *ngIf="selectedInquiry.notes">
+          <label class="form-label">Inquiry Notes</label>
+          <textarea class="form-textarea" [value]="selectedInquiry.notes" readonly rows="3"
+            style="background-color: #f7fafc; cursor: not-allowed; resize: none;"></textarea>
+        </div>
+
+        <!-- Follow-ups (if any) -->
+        <div class="form-group" *ngIf="selectedInquiry.followUps && selectedInquiry.followUps.length > 0">
+          <label class="form-label">Follow-up History</label>
+          <div class="followup-list">
+            <div *ngFor="let followUp of selectedInquiry.followUps" class="followup-item">
+              <span class="followup-date">{{ followUp.date }}</span>
+              <span class="followup-note">{{ followUp.note }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -195,7 +293,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let iq of inquiries">
-            <td>{{ iq.no }}</td>
+            <td>{{ getDisplayInquiryId(iq.id) }}</td>
             <td>{{ iq.date }}</td>
             <td>
               <span class="badge badge-count">{{ iq.items.length }} items</span>

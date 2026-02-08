@@ -58,6 +58,8 @@
           <th>Contact</th>
           <th>Tax Documents</th>
           <th>Business Info</th>
+          <th>Billing Address</th>
+          <th>Shipping Address</th>
           <th class="actions-column">Actions</th>
         </tr>
       </thead>
@@ -137,6 +139,9 @@
                   </svg>
                   View
                 </a>
+                <button *ngIf="vendor.gstFile" type="button" class="doc-remove-btn" (click)="removeGSTFile(vendor)">
+                  Remove
+                </button>
                 <label class="file-upload-label">
                   <input type="file" (change)="onGstFileSelectFromTable($event, vendor)" class="file-input" />
                   Upload
@@ -156,6 +161,9 @@
                   </svg>
                   View
                 </a>
+                <button *ngIf="vendor.panFile" type="button" class="doc-remove-btn" (click)="removePanFile(vendor)">
+                  Remove
+                </button>
                 <label class="file-upload-label">
                   <input type="file" (change)="onPanFileSelectFromTable($event, vendor)" class="file-input" />
                   Upload
@@ -175,6 +183,9 @@
                   </svg>
                   View
                 </a>
+                <button *ngIf="vendor.msmeFile" type="button" class="doc-remove-btn" (click)="removeMSMEFile(vendor)">
+                  Remove
+                </button>
                 <label class="file-upload-label">
                   <input type="file" (change)="onMsmeFileSelectFromTable($event, vendor)" class="file-input" />
                   Upload
@@ -190,10 +201,46 @@
                 <span class="info-label">Payment:</span>
                 <span class="info-value">{{ vendor.paymentTerms }}</span>
               </div>
-              <div class="info-item">
+              <!-- <div class="info-item">
                 <span class="info-label">Product:</span>
                 <span class="info-value">{{ vendor.product }}</span>
+              </div> -->
+            </div>
+          </td>
+
+          <td>
+            <div class="address-block">
+              <div class="address-title">Billing:</div>
+
+              <div *ngIf="vendor.billing?.street; else noBilling">
+                {{ vendor.billing.street }}
+                <span *ngIf="vendor.billing.area">, {{ vendor.billing.area }}</span><br>
+                {{ vendor.billing.city }}
+                <span *ngIf="vendor.billing.state">, {{ vendor.billing.state }}</span><br>
+                {{ vendor.billing.pincode }}
               </div>
+
+              <ng-template #noBilling>
+                <span class="address-muted">—</span>
+              </ng-template>
+            </div>
+          </td>
+
+          <td>
+            <div class="address-block">
+              <div class="address-title">Shipping:</div>
+
+              <div *ngIf="vendor.shipping?.street; else noShipping">
+                {{ vendor.shipping.street }}
+                <span *ngIf="vendor.shipping.area">, {{ vendor.shipping.area }}</span><br>
+                {{ vendor.shipping.city }}
+                <span *ngIf="vendor.shipping.state">, {{ vendor.shipping.state }}</span><br>
+                {{ vendor.shipping.pincode }}
+              </div>
+
+              <ng-template #noShipping>
+                <span class="address-muted">—</span>
+              </ng-template>
             </div>
           </td>
 
@@ -294,7 +341,7 @@
 
         <div class="row-2">
           <div class="form-group">
-            <label class="form-label">Company Name</label>
+            <label class="form-label">Company Name<span class="required">*</span></label>
             <input type="text" class="form-input" [(ngModel)]="newVendor.companyName" name="companyName" />
           </div>
 
@@ -354,9 +401,52 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Address</label>
-          <textarea class="form-textarea" [(ngModel)]="newVendor.address" name="address" rows="2"
-            placeholder="Enter complete address..."></textarea>
+          <div class="section-card">
+            <h3 class="section-header">Billing Address</h3>
+
+            <input class="form-input" placeholder="Street" [(ngModel)]="newVendor.billing.street" name="b_street">
+
+            <input class="form-input" placeholder="Area" [(ngModel)]="newVendor.billing.area" name="b_area">
+
+            <input class="form-input" placeholder="City" [(ngModel)]="newVendor.billing.city" name="b_city">
+
+            <input class="form-input" placeholder="State" [(ngModel)]="newVendor.billing.state" name="b_state">
+
+            <input class="form-input" placeholder="Pincode" [(ngModel)]="newVendor.billing.pincode" name="b_pincode">
+
+            <input class="form-input" placeholder="Country" [(ngModel)]="newVendor.billing.country" name="b_country">
+          </div>
+
+          <div class="form-group">
+            <label style="display:flex; gap:8px; align-items:center;">
+              <input type="checkbox" [(ngModel)]="sameAsBilling" name="sameAsBilling"
+                (change)="toggleSameAsBilling()" />
+              Shipping address same as billing
+            </label>
+          </div>
+
+          <div class="section-card">
+            <h3 class="section-header">Shipping Address</h3>
+
+            <input class="form-input" placeholder="Street" [(ngModel)]="newVendor.shipping.street" name="s_street"
+              [readonly]="sameAsBilling">
+
+            <input class="form-input" placeholder="Area" [(ngModel)]="newVendor.shipping.area" name="s_area"
+              [readonly]="sameAsBilling">
+
+            <input class="form-input" placeholder="City" [(ngModel)]="newVendor.shipping.city" name="s_city"
+              [readonly]="sameAsBilling">
+
+            <input class="form-input" placeholder="State" [(ngModel)]="newVendor.shipping.state" name="s_state"
+              [readonly]="sameAsBilling">
+
+            <input class="form-input" placeholder="Pincode" [(ngModel)]="newVendor.shipping.pincode" name="s_pincode"
+              [readonly]="sameAsBilling">
+
+            <input class="form-input" placeholder="Country" [(ngModel)]="newVendor.shipping.country" name="s_country"
+              [readonly]="sameAsBilling">
+          </div>
+
         </div>
       </div>
 
@@ -384,9 +474,19 @@
             </svg>
             Upload GST Certificate
           </label>
-          <small *ngIf="newVendor.gstFile" class="file-name">
-            📎 {{ newVendor.gstFile.name }}
-          </small>
+
+          <div *ngIf="newVendor.gstFile" class="file-actions">
+            <span class="file-name">📎 {{ newVendor.gstFile.name }}</span>
+
+            <a class="file-link" [href]="newVendor.gstFile.data" target="_blank" [download]="newVendor.gstFile.name">
+              View
+            </a>
+
+            <button type="button" class="doc-remove-btn" (click)="removeGSTFile('vendor')">
+              Remove
+            </button>
+          </div>
+
         </div>
 
         <!-- PAN -->
@@ -402,9 +502,19 @@
             </svg>
             Upload PAN Document
           </label>
-          <small *ngIf="newVendor.panFile" class="file-name">
-            📎 {{ newVendor.panFile.name }}
-          </small>
+
+          <div *ngIf="newVendor.panFile" class="file-actions">
+            <span class="file-name">📎 {{ newVendor.panFile.name }}</span>
+
+            <a class="file-link" [href]="newVendor.panFile.data" target="_blank" [download]="newVendor.panFile.name">
+              View
+            </a>
+
+            <button type="button" class="doc-remove-btn" (click)="removePanFile('vendor')">
+              Remove
+            </button>
+          </div>
+
         </div>
 
         <!-- MSME -->
@@ -420,9 +530,19 @@
             </svg>
             Upload MSME Certificate
           </label>
-          <small *ngIf="newVendor.msmeFile" class="file-name">
-            📎 {{ newVendor.msmeFile.name }}
-          </small>
+
+          <div *ngIf="newVendor.msmeFile" class="file-actions">
+            <span class="file-name">📎 {{ newVendor.msmeFile.name }}</span>
+
+            <a class="file-link" [href]="newVendor.msmeFile.data" target="_blank" [download]="newVendor.msmeFile.name">
+              View
+            </a>
+
+            <button type="button" class="doc-remove-btn" (click)="removeMSMEFile('vendor')">
+              Remove
+            </button>
+          </div>
+
         </div>
       </div>
 

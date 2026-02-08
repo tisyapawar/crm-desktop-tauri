@@ -211,8 +211,9 @@
 }
 
 .customer-company {
-  font-size: 13px;
-  color: #64748b;
+  font-weight: 600;
+  color: #1a202c;
+  font-size: 15px;
 }
 
 /* Contact Info */
@@ -320,6 +321,25 @@
 
 .file-input {
   display: none;
+}
+
+.doc-remove-btn {
+  display: inline-flex;
+  background-color: rgb(248, 67, 67);
+  align-items: center;
+  font-size: 11px;
+  color: #001F3F;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e0;
+  transition: all 0.2s ease;
+}
+
+.doc-remove-btn:hover {
+  background: rgb(184, 35, 35);
+  color: white;
+  border-color: #001F3F;
 }
 
 /* Address Cell */
@@ -787,4 +807,83 @@ select,
 textarea {
   box-sizing: border-box;
   max-width: 100%;
+}
+
+/* ===================================
+   CHECKBOX STYLING
+   =================================== */
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: 12px;
+}
+
+.checkbox-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.checkbox-input:hover {
+  border-color: #001F3F;
+  box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.1);
+}
+
+.checkbox-input:checked {
+  background: linear-gradient(135deg, #001F3F 0%, #0a4d8c 100%);
+  border-color: #001F3F;
+}
+
+.checkbox-input:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background: #f7fafc;
+}
+
+.checkbox-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #2d3748;
+  transition: color 0.2s ease;
+}
+
+.checkbox-label:hover .checkbox-text {
+  color: #001F3F;
+}
+
+/* Disabled state for shipping inputs */
+.form-input:disabled {
+  background-color: #f7fafc;
+  color: #a0aec0;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
 }

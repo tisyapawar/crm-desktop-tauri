@@ -1,218 +1,3 @@
-// import { Component, ViewEncapsulation } from "@angular/core";
-// import { CommonModule } from "@angular/common";
-// import { FormsModule } from "@angular/forms";
-// import { Router } from "@angular/router";
-// import { DBService } from '../../service/db.service';
-
-// @Component({
-//   selector: 'app-create-offer',
-//   standalone: true,
-//   imports: [CommonModule, FormsModule],
-//   templateUrl: './create-offer.component.html',
-//   styleUrls: ['./create-offer.component.css'],
-//   encapsulation: ViewEncapsulation.None
-// })
-// export class CreateOfferComponent {
-
-//   offer: any = {
-//   id: null,
-//   offerRef: "",
-//   customerId: null,
-//   customerName: "",
-//   businessVertical: "",
-//   date: new Date().toISOString().slice(0, 10),
-//   items: [],
-//   subtotal: 0,
-//   gst: 0,
-//   grandTotal: 0,
-//   notes: "",
-//   paymentTerms: "",
-//   validity: "",
-//   terms: "",
-// };
-
-//   businessVerticals = [
-//   "Medical Devices",
-//   "Diagnostics",
-//   "Hospital Furniture",
-//   "OT & ICU Equipment",
-//   "Laboratory Equipment",
-//   "Rehabilitation",
-//   "Consumables",
-//   "Other"
-// ];
-
-//   constructor(private router: Router, private dbService: DBService) {
-//    const state = history.state;
-
-//   if (state.inquiry) {
-//     const inquiry = state.inquiry;
-
-//     // Customer
-//     this.offer.customerName = inquiry.customerName;
-
-//     // Vertical
-//     this.offer.businessVertical = inquiry.vertical || "";
-
-//     // Payment Terms
-//     this.offer.paymentTerms = inquiry.paymentTerms || "";
-
-//     // Validity (default)
-//     this.offer.validity = "30 Days";
-
-//     // Items from inquiry
-//     this.offer.items = inquiry.items.map((it: any) => ({
-//       name: it.item,
-//       qty: it.qty,
-//       rate: it.rate,
-//       total: it.total
-//     }));
-
-//     this.calcTotals();
-//   }
-
-//   // Edit existing
-//   if (state.offer) {
-//     this.offer = state.offer;
-//   }
-// }
-
-
-//   // OPEN DATABASE (VERSION 6)
-//   openDB(): Promise<IDBDatabase> {
-//   return new Promise((resolve, reject) => {
-//     console.log("📌 Opening DB...");
-
-//     // First open normally to get version 56
-//     const firstReq = indexedDB.open("crm-db");
-
-//     firstReq.onsuccess = () => {
-//       const oldDB = firstReq.result;
-//       const currentVersion = oldDB.version;
-
-//       console.log("✔ Current CRM DB Version:", currentVersion);
-
-//       oldDB.close();
-
-//       // Upgrade to version 57
-//       const newVersion = currentVersion + 1;
-//       console.log("⚠ Upgrading DB to version:", newVersion);
-
-//       const upgradeReq = indexedDB.open("crm-db", newVersion);
-
-//       upgradeReq.onupgradeneeded = (event) => {
-//         const db = upgradeReq.result;
-
-//         console.log("🔧 Running DB upgrade...");
-
-//         if (!db.objectStoreNames.contains("offers")) {
-//           db.createObjectStore("offers", { keyPath: "id", autoIncrement: true });
-//           console.log("✔ Created new 'offers' store");
-//         } else {
-//           console.log("✔ 'offers' store already exists");
-//         }
-//       };
-
-//       upgradeReq.onsuccess = () => {
-//         console.log("✔ DB opened successfully at version", newVersion);
-//         resolve(upgradeReq.result);
-//       };
-
-//       upgradeReq.onerror = (e) => {
-//         console.error("❌ Error upgrading DB:", e);
-//         reject(e);
-//       };
-//     };
-
-//     firstReq.onerror = (err) => {
-//       console.error("❌ Error opening CRM DB:", err);
-//       reject(err);
-//     };
-//   });
-// }
-
-//   addItem() {
-//     console.log("➕ Adding new item");
-//     this.offer.items.push({ name: "", qty: 1, rate: 0, total: 0 });
-//     this.calcTotals();
-//   }
-
-//   removeItem(i: number) {
-//     console.log("🗑 Removing item at index:", i);
-//     this.offer.items.splice(i, 1);
-//     this.calcTotals();
-//   }
-
-//   calcTotals() {
-//     console.log("🧮 Calculating totals...");
-
-//     this.offer.items.forEach((item: any) => {
-//       item.total = (item.qty * item.rate) || 0;
-//     });
-
-//     this.offer.subtotal = this.offer.items.reduce((sum: any, item: any) => sum + item.total, 0);
-//     this.offer.gst = +(this.offer.subtotal * 0.18).toFixed(2);
-//     this.offer.grandTotal = +(this.offer.subtotal + this.offer.gst).toFixed(2);
-
-//     console.log("➡ Subtotal:", this.offer.subtotal);
-//     console.log("➡ GST:", this.offer.gst);
-//     console.log("➡ Grand Total:", this.offer.grandTotal);
-//   }
-
-//   async saveOffer() {
-//   console.log("💾 Save Offer Clicked");
-//   this.calcTotals();
-
-//   try {
-//     const db = await this.dbService.openDB();
-//     const tx = db.transaction("offers", "readwrite");
-//     const store = tx.objectStore("offers");
-
-//     let offerToSave = { ...this.offer };
-//     delete offerToSave.id; // allow autoIncrement
-
-//     const req = store.add(offerToSave);
-
-//     req.onsuccess = async (e: any) => {
-//       const newId = e.target.result;
-//       console.log("✔ Offer saved with new ID:", newId);
-
-//       // Generate reference number
-//       const ref = this.generateOfferRef(newId);
-
-//       // Update record with offerRef
-//       const tx2 = db.transaction("offers", "readwrite");
-//       const store2 = tx2.objectStore("offers");
-
-//       const updatedOffer = { ...offerToSave, id: newId, offerRef: ref };
-//       store2.put(updatedOffer);
-
-//       tx2.oncomplete = () => {
-//         alert("Offer Created Successfully!");
-//         this.router.navigate(['/offers']);
-//       };
-//     };
-
-//     req.onerror = (e: any) => {
-//       console.error("❌ Error saving offer:", e.target.error);
-//       alert("Failed to save offer");
-//     };
-
-//   } catch (err) {
-//     console.error("❌ saveOffer() failed:", err);
-//   }
-// }
-
-
-// generateOfferRef(id: number): string {
-//   const year = new Date().getFullYear();
-//   const padded = id.toString().padStart(4, '0');
-//   return `NIEC/MDD/${year}/${padded}`;
-// }
-
-// }
-
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -232,13 +17,17 @@ export class CreateOfferComponent implements OnInit {
   customers: any[] = [];
   inquiries: any[] = [];
   selectedCustomer: any = null;
+  selectedInquiry: any = null; // Store full inquiry data for display
 
   showInquiryPopup = false;
+  isEditMode = false;
+  editingOfferId: number | null = null;
+
 
   businessVerticals = [
-    'PROJECTS',
-    'MATERIAL DISTRIBUTION',
-    'BOTH'
+    'Projects',
+    'Material Distribution Division',
+    'Both'
   ];
 
   offer: any = {
@@ -267,6 +56,23 @@ export class CreateOfferComponent implements OnInit {
     this.customers = await this.db.getAll('customers');
 
     console.log('🟢 Customers loaded:', this.customers);
+
+    const state = history.state;
+
+    if (state && state.offer) {
+      console.log('✏️ Edit mode detected:', state.offer);
+
+      this.isEditMode = true;
+      this.editingOfferId = state.offer.id;
+
+      // Load entire offer into form
+      this.offer = {
+        ...state.offer
+      };
+
+      // Safety: ensure items array exists
+      this.offer.items = this.offer.items || [];
+    }
   }
 
   async onCustomerChange() {
@@ -274,6 +80,8 @@ export class CreateOfferComponent implements OnInit {
 
     if (!this.selectedCustomer) {
       console.warn('⚠️ No customer selected');
+      // Reset vertical when no customer selected
+      this.offer.businessVertical = '';
       return;
     }
 
@@ -282,6 +90,10 @@ export class CreateOfferComponent implements OnInit {
     this.offer.customerId = customer.id;
     this.offer.customerName = customer.name;
     this.offer.customerSnapshot = { ...customer };
+
+    // ✅ AUTO-FILL BUSINESS VERTICAL
+    this.offer.businessVertical = customer.businessVertical || '';
+    console.log('🟢 Auto-filled vertical:', this.offer.businessVertical);
 
     console.log('🟢 Offer customer set:', this.offer.customerSnapshot);
 
@@ -305,49 +117,50 @@ export class CreateOfferComponent implements OnInit {
     }
   }
 
-  // selectInquiry(inquiry: any) {
-  //   console.log('🟡 Inquiry selected:', inquiry);
-
-  //   // Inquiry primary key
-  //   this.offer.inquiryNo = inquiry.no;
-
-  //   // Map items EXACTLY as stored in DB
-  //   this.offer.items = inquiry.items.map((i: any) => {
-  //     console.log('📦 Inquiry item:', i);
-
-  //     return {
-  //       name: i.name,                // ✅ CORRECT FIELD
-  //       hsn: '',                     // ❌ Not present in inquiry DB
-  //       qty: i.qty,                  // ✅ CORRECT FIELD
-  //       rate: 0,
-  //       total: 0
-  //     };
-  //   });
-
-  //   console.log('🟢 Offer items populated:', this.offer.items);
-
-  //   this.calcTotals();
-  //   this.showInquiryPopup = false;
-  // }
-
-  selectInquiry(inquiry: any) {
+  async selectInquiry(inquiry: any) {
     console.log('🟡 Inquiry selected:', inquiry);
 
-    this.offer.inquiryNo = inquiry.no;
+    // Store full inquiry data for display
+    this.selectedInquiry = { ...inquiry };
+
+    this.offer.inquiryNo = inquiry.id; // Use ID instead of non-existent 'no'
+
+    // Load inventory to get rates
+    const inventory = await this.db.getAll('inventory');
+    console.log('📦 Inventory loaded for rate lookup:', inventory.length, 'items');
 
     this.offer.items = inquiry.items.map((i: any) => {
       console.log('📦 Inquiry item:', i);
 
+      // Try to find matching inventory item by product name (case-insensitive)
+      const inquiryName = (i.productName || '').toLowerCase().trim();
+
+      const inventoryItem = inventory.find((inv: any) => {
+        const invName = (inv.displayName || '').toLowerCase().trim();
+        return invName.startsWith(inquiryName);
+      });
+
+
+      const rate = inventoryItem?.price || 0;
+      const qty = i.qty || 0;
+
+      if (inventoryItem) {
+        console.log('✅ Found inventory match:', i.productName, '→ Rate:', rate);
+      } else {
+        console.log('⚠️ No inventory match for:', i.productName, '→ Rate set to 0');
+      }
+
       return {
         name: i.productName,          // ✅ FIXED
-        hsn: i.hsn || i.make || '',   // ✅ fallback until HSN added
-        qty: i.qty || 0,
-        rate: 0,
-        total: 0
+        hsn: i.hsn || '',   // ✅ fallback until HSN added
+        qty: qty,
+        rate: rate,                   // ✅ AUTO-FILLED from inventory
+        total: qty * rate             // ✅ Calculate immediately
       };
     });
 
-    console.log('🟢 Offer items populated:', this.offer.items);
+    console.log('🟢 Offer items populated with rates:', this.offer.items);
+    console.log('🟢 Full inquiry stored:', this.selectedInquiry);
 
     this.calcTotals();
     this.showInquiryPopup = false;
@@ -386,79 +199,6 @@ export class CreateOfferComponent implements OnInit {
     return d.toISOString().slice(0, 10);
   }
 
-
-  // async saveOffer() {
-  //   console.log('💾 Saving offer:', this.offer);
-
-  //   await this.db.add('offers', {
-  //     ...this.offer,
-  //     date: new Date().toISOString().slice(0, 10)
-  //   });
-
-  //   console.log('✅ Offer saved successfully');
-  //   alert('Offer saved successfully');
-  // }
-
-  // async saveOffer() {
-  //   console.log('💾 Saving offer:', this.offer);
-
-  //   // 1️⃣ SAVE OFFER (DO NOT REMOVE)
-  //   const offerId = await this.db.add('offers', {
-  //     ...this.offer,
-  //     date: new Date().toISOString().slice(0, 10)
-  //   });
-
-  //   // 2️⃣ GENERATE OFFER REF
-  //   const offerRef = this.generateOfferRef(offerId);
-
-  //   // 3️⃣ CREATE FOLLOW-UP REMINDER (ONLY HERE)
-  //   await this.db.add('reminders', {
-  //     date: this.getFollowUpDate(2),   // +2 days
-  //     time: '10:00',
-  //     type: 'offer',
-  //     name: this.offer.customerName,
-  //     mobile: '',
-  //     referenceNo: offerRef,
-  //     note: `Follow up for offer ${offerRef}`,
-  //     source: 'system',
-  //     status: 'pending',
-  //     createdAt: new Date().toISOString()
-  //   });
-
-  //   console.log('✅ Offer + reminder created');
-
-  //   // 4️⃣ NAVIGATE BACK
-  //   this.router.navigateByUrl('/offers');
-  // }
-
-  // async saveOffer() {
-  //   console.log('💾 Saving offer:', this.offer);
-
-  //   const id = await this.db.add('offers', {
-  //     ...this.offer,
-  //     date: new Date().toISOString().slice(0, 10)
-  //   });
-
-  //   // 🔔 CREATE OFFER FOLLOW-UP REMINDER (ONLY ON CREATE)
-  //   const offerRef = this.generateOfferRef(id);
-
-  //   await this.db.add('reminders', {
-  //     date: this.getFollowUpDate(2),
-  //     time: '10:00',
-  //     type: 'offer',
-  //     name: this.offer.customerName,
-  //     mobile: '',
-  //     referenceNo: offerRef,
-  //     note: `Follow up for offer ${offerRef}`,
-  //     source: 'system',
-  //     status: 'pending',
-  //     createdAt: new Date().toISOString()
-  //   });
-
-  //   console.log('✅ Offer + reminder created');
-  //   this.router.navigateByUrl('/offers');
-  // }
-
   async saveOffer() {
     console.log('═══════════════════════════════════════');
     console.log('💾 SAVING NEW OFFER');
@@ -467,15 +207,45 @@ export class CreateOfferComponent implements OnInit {
     console.log('───────────────────────────────────────');
 
     // 1️⃣ SAVE OFFER
-    const offerId = await this.db.add('offers', {
-      ...this.offer,
-      date: new Date().toISOString().slice(0, 10)
-    });
+    // const offerId = await this.db.add('offers', {
+    //   ...this.offer,
+    //   date: new Date().toISOString().slice(0, 10)
+    // });
+
+    let offerId: number;
+
+    if (this.isEditMode && this.editingOfferId) {
+      // 🔁 UPDATE EXISTING OFFER
+      await this.db.put('offers', {
+        ...this.offer,
+        id: this.editingOfferId
+      });
+
+      offerId = this.editingOfferId;
+      console.log('✏️ Offer updated with ID:', offerId);
+
+    } else {
+      // ➕ CREATE NEW OFFER
+      offerId = await this.db.add('offers', {
+        ...this.offer,
+        date: new Date().toISOString().slice(0, 10)
+      });
+
+      console.log('✅ New offer created with ID:', offerId);
+    }
+
 
     console.log('✅ Offer saved with ID:', offerId);
 
     // 2️⃣ GENERATE OFFER REF
-    const offerRef = this.generateOfferRef(offerId);
+    // const offerRef = this.generateOfferRef(offerId);
+    let offerRef = this.offer.offerRef;
+
+    if (!this.isEditMode) {
+      offerRef = this.generateOfferRef(offerId);
+      this.offer.offerRef = offerRef;
+    }
+
     console.log('📋 Generated Offer Ref:', offerRef);
 
     // 3️⃣ CREATE OFFER FOLLOW-UP REMINDER
@@ -491,14 +261,25 @@ export class CreateOfferComponent implements OnInit {
       console.log('  ├─ followUpDays: 2');
       console.log('  └─ note:', `Follow-up offer ${offerRef} - ${this.offer.customerName}`);
 
-      await this.db.createAutoReminder({
-        type: 'offer',
-        name: this.offer.customerName,
-        mobile: mobile,
-        referenceNo: offerRef,
-        followUpDays: 2,
-        note: `Follow-up offer ${offerRef} - ${this.offer.customerName}`
-      });
+      // await this.db.createAutoReminder({
+      //   type: 'offer',
+      //   name: this.offer.customerName,
+      //   mobile: mobile,
+      //   referenceNo: offerRef,
+      //   followUpDays: 2,
+      //   note: `Follow-up offer ${offerRef} - ${this.offer.customerName}`
+      // });
+      if (!this.isEditMode) {
+        await this.db.createAutoReminder({
+          type: 'offer',
+          name: this.offer.customerName,
+          mobile: mobile,
+          referenceNo: offerRef,
+          followUpDays: 2,
+          note: `Follow-up offer ${offerRef} - ${this.offer.customerName}`
+        });
+      }
+
 
       console.log('✅ Reminder creation completed');
       console.log('═══════════════════════════════════════');
@@ -517,6 +298,12 @@ export class CreateOfferComponent implements OnInit {
   goBackToList() {
     console.log('🔙 Navigating back to Offers list');
     this.router.navigateByUrl('/offers');
+  }
+
+  // Generate display inquiry ID (INQ-0001 format)
+  getDisplayInquiryId(id?: number): string {
+    if (!id) return '-';
+    return `INQ-${String(id).padStart(4, '0')}`;
   }
 
 }

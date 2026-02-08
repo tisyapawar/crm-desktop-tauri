@@ -35,10 +35,16 @@ export class InvoicesComponent implements OnInit {
   selectedInvoiceForPrint: InvoiceModel | null = null;
   payments: any[] = [];
   inventoryItems: any[] = [];
-
+  selectedCompany: string | null = null;
+  inquiries: any[] = [];
+  proformas: any[] = [];
   showInvoiceModal = false;
   isEditing = false;
   editingId: number | null = null;
+  selectedInvoiceItems: any[] = [];
+  selectedItemIndex: number | null = null;
+
+
 
   // Tax configuration (can be made dynamic later)
   taxRates: TaxRates = DEFAULT_TAX_RATES;
@@ -66,8 +72,13 @@ export class InvoicesComponent implements OnInit {
   async ngOnInit() {
     this.customers = await this.db.getAll('customers');
     this.invoices = await this.db.getAll('invoices');
+
+    this.inquiries = await this.db.getAll('inquiries');
+    this.proformas = await this.db.getAll('proformas');
+
     await this.loadInventoryItems();
   }
+
 
   /* ===============================
      INVENTORY LOADING (using DBService)
@@ -250,6 +261,157 @@ export class InvoicesComponent implements OnInit {
     this.showInvoiceModal = false;
   }
 
+  onCompanyChange() {
+    if (!this.selectedCompany) return;
+
+    const customer = this.customers.find(
+      c => c.companyName === this.selectedCompany
+    );
+
+    if (!customer) return;
+
+    // Bill To (Customer master data)
+    // this.invoiceForm.billTo = {
+    //   name: customer.companyName,
+    //   address: customer.billingAddress || '',
+    //   gstin: customer.gstin || '',
+    //   pan: customer.pan || '',
+    //   state: customer.state || '',
+    //   supplyStateCode: customer.stateCode || '',
+    //   placeOfSupply: customer.city || ''
+    // };
+
+    const billingAddress = this.buildAddress(customer.billing);
+    const billingState = customer.billing?.state || '';
+    const billingStateCode = this.getStateCode(billingState);
+    const billingCity = customer.billing?.city || '';
+
+    this.invoiceForm.billTo = {
+      name: customer.companyName,
+      address: billingAddress,
+      gstin: customer.gstin || '',
+      pan: customer.pan || '',
+      state: billingState,
+      supplyStateCode: billingStateCode,
+      placeOfSupply: billingCity
+    };
+
+    this.invoiceForm.shipTo = { ...this.invoiceForm.billTo };
+
+    // Ship To – default same as bill to
+    this.invoiceForm.shipTo = {
+      ...this.invoiceForm.billTo
+    };
+
+    // Load related data
+    this.loadSalesOrderItems(customer.companyName);
+    this.loadPaymentTerms(customer.companyName);
+  }
+
+  async loadSalesOrderItems(companyName: string) {
+    // 🔍 Load ALL sales orders
+    const salesOrders = await this.db.getAll('salesOrders');
+    console.log('company input', companyName);
+    console.log('all sales orders', salesOrders);
+
+    // 🎯 Filter by customer name (matches save function)
+    const customerOrders = salesOrders.filter(
+      (so: any) => so.companyName === companyName
+    );
+
+    if (!customerOrders.length) {
+      console.warn('⚠️ No sales orders found for', companyName);
+      return;
+    }
+
+    // 🆕 Use latest sales order
+    const latestSO = customerOrders[customerOrders.length - 1];
+
+    // ⚠️ Sales order items may come from itemsShow or items
+    const soItems = latestSO.items || latestSO.itemsShow || [];
+
+    if (!soItems.length) {
+      console.warn('⚠️ Sales order has no items:', latestSO.salesOrderNo);
+      return;
+    }
+
+    console.log('my items', latestSO.items);
+    this.invoiceForm.freightCharges = latestSO.freightCharges;
+    this.invoiceForm.transport.mode = latestSO.transportMode;
+    this.invoiceForm.transport.name = latestSO.transporterName;
+
+    this.invoiceForm.items = soItems.map((it: any, index: number) => {
+
+      // 🔍 Inventory lookup (price, HSN)
+      const invItem = this.inventoryItems.find((p: any) => {
+        const invName = (p.displayName).toLowerCase().trim();
+        const soName = (it.item).toLowerCase().trim();
+        return invName === soName;
+      });
+
+      console.log(invItem);
+
+      const qty = Number(it.qty) || 0;
+      const rate = Number(invItem?.price) || 0;
+
+      return {
+        srNo: index + 1,
+        particulars: it.item || it.name || '',
+        hsn: invItem?.hsn || '',
+        uom: it.uom || '',
+        qty,
+        rate,
+        amount: qty * rate
+      };
+    });
+
+    this.recalculateTotals();
+  }
+
+  loadInquiryItems(companyName: string) {
+    const inquiries = this.inquiries.filter(
+      (i: any) => i.companyName === companyName
+    );
+
+    if (!inquiries.length) return;
+
+    const latestInquiry = inquiries[inquiries.length - 1];
+
+    this.invoiceForm.items = latestInquiry.items.map((it: any, index: number) => {
+
+      const invItem = this.inventoryItems.find((p: any) => {
+        const invName = (p.displayName || p.name || '').toLowerCase().trim();
+        const inqName = (it.productName || '').toLowerCase().trim();
+        return invName === inqName;
+      });
+
+      return {
+        srNo: index + 1,
+        particulars: it.productName,
+        hsn: invItem?.hsn || '',
+        uom: it.uom,
+        qty: it.qty,
+        rate: invItem?.price || 0,
+        amount: it.qty * (invItem?.price || 0)
+      };
+    });
+
+    this.recalculateTotals();
+  }
+
+
+
+  loadPaymentTerms(companyName: string) {
+    const proforma = this.proformas.find(
+      (p: any) => p.buyerName === companyName
+    );
+
+    if (!proforma) return;
+
+    this.invoiceForm.paymentTerms = proforma.paymentTerms || '';
+  }
+
+
   /* ===============================
      STATE CODE MAPPING
   =============================== */
@@ -309,88 +471,6 @@ export class InvoicesComponent implements OnInit {
       addressObj.country
     ].filter(part => part && part.trim() !== '');
     return parts.join(', ');
-  }
-
-  /* ===============================
-     CUSTOMER SELECTION HANDLER
-  =============================== */
-  onInvoiceCustomerChange() {
-    if (!this.selectedCustomer) {
-      console.log('⚠️ No customer selected, clearing fields');
-      this.invoiceForm.billTo = createEmptyPartyDetails();
-      this.invoiceForm.shipTo = createEmptyPartyDetails();
-      this.invoiceForm.supplyStateCode = '';
-      this.invoiceForm.placeOfSupply = '';
-      return;
-    }
-
-    console.log('👤 Customer selected:', this.selectedCustomer);
-
-    const c = this.selectedCustomer;
-
-    // Build billing address
-    const billingAddress = this.buildAddress(c.billing);
-    const billingState = c.billing?.state || '';
-    const billingStateCode = this.getStateCode(billingState);
-    const billingCity = c.billing?.city || '';
-
-    // Populate Bill To
-    this.invoiceForm.billTo = {
-      customerId: c.id ?? null,
-      name: c.name || c.companyName || '',
-      address: billingAddress,
-      gstin: c.gstin || '',
-      pan: c.pan || '',
-      state: billingState,
-      supplyStateCode: billingStateCode,
-      placeOfSupply: billingCity
-    };
-
-    // Determine shipping address
-    const hasShippingAddress = c.shipping &&
-      (c.shipping.street || c.shipping.city || c.shipping.state);
-
-    let shippingAddress, shippingState, shippingStateCode, shippingCity;
-
-    if (hasShippingAddress) {
-      shippingAddress = this.buildAddress(c.shipping);
-      shippingState = c.shipping.state || '';
-      shippingStateCode = this.getStateCode(shippingState);
-      shippingCity = c.shipping.city || '';
-    } else {
-      shippingAddress = billingAddress;
-      shippingState = billingState;
-      shippingStateCode = billingStateCode;
-      shippingCity = billingCity;
-    }
-
-    // Populate Ship To
-    this.invoiceForm.shipTo = {
-      customerId: c.id ?? null,
-      name: c.name || c.companyName || '',
-      address: shippingAddress,
-      gstin: c.gstin || '',
-      pan: c.pan || '',
-      state: shippingState,
-      supplyStateCode: shippingStateCode,
-      placeOfSupply: shippingCity
-    };
-
-    // Set top-level supply details (from billing address)
-    this.invoiceForm.supplyStateCode = billingStateCode;
-    this.invoiceForm.placeOfSupply = billingCity;
-
-    // Determine supply type based on state codes
-    if (billingStateCode && shippingStateCode) {
-      this.invoiceForm.supplyType =
-        billingStateCode === shippingStateCode ? 'GST' : 'IGST';
-    }
-
-    console.log('✅ Bill To auto-filled:', this.invoiceForm.billTo);
-    console.log('✅ Ship To auto-filled:', this.invoiceForm.shipTo);
-    console.log('✅ Supply Type:', this.invoiceForm.supplyType);
-
-    this.recalculateTotals();
   }
 
   /* ===============================
@@ -743,6 +823,20 @@ export class InvoicesComponent implements OnInit {
     return `Rupees ${formatter.format(amount)} Only`;
   }
 
+  private findMatchingOrder(companyName: string, items: any[]) {
+    const normalize = (v: any) =>
+      (v || '').toString().toLowerCase().trim();
+
+    const invoiceItemNames = items.map(i =>
+      normalize(i.particulars || i.productName)
+    );
+
+    console.log('🔎 Trying transport auto-fill match for:', {
+      companyName,
+      invoiceItemNames
+    });
+
+  }
   /* ===============================
      LOAD LOGO AS BASE64 (HELPER)
   =============================== */
@@ -848,37 +942,75 @@ export class InvoicesComponent implements OnInit {
     }
   }
 
+  selectItemForGRR(item: any, index: number) {
+    this.selectedItemIndex = index;
+
+    this.grrForm.materialDesc = `${item.particulars} (${item.uom || ''})`;
+    this.grrForm.qtyInvoice = item.qty;
+    this.grrForm.qtyReceived = item.qty;
+  }
+
+  selectItemForMIR(item: any, index: number) {
+    this.selectedItemIndex = index;
+
+    this.mirForm.materialDesc = `${item.particulars} (${item.uom || ''})`;
+    this.mirForm.qtyInvoice = item.qty;
+  }
+
+
   /* ===============================
      GRR (Goods Receipt Report)
   =============================== */
   showGRRModal = false;
   grrForm: any = {};
 
-  openGRRModal(item: any) {
+  openGRRModal(inv: any) {
+    this.selectedInvoiceItems = inv.items || [];
+    this.selectedItemIndex = null;
+    const firstItem = inv.items?.[0];
+
+    // 🔑 Find inventory item to get vendor
+    const inventoryItem = this.inventoryItems.find((p: any) => {
+      const invName = (p.displayName || p.name || '').toLowerCase().trim();
+      const itemName = (firstItem?.particulars || '').toLowerCase().trim();
+      return invName === itemName;
+    });
+
     this.grrForm = {
-      vendorName: item.vendorName || '',
-      reportNo: '',
+      // ✅ VENDOR COMES FROM INVENTORY
+      vendorName: inventoryItem?.vendorName || '',
+
+      reportNo: `GRR-${inv.invoiceNo || ''}`,
       date: new Date().toISOString().split('T')[0],
-      poNoDate: '',
+
+      poNoDate: inv.orderRefNo || '',
       receivedOn: '',
-      materialDesc: `${item.name} ${item.size} ${item.category}`,
-      challanNo: '',
-      qtyInvoice: item.quantity || 0,
-      qtyReceived: item.quantity || 0,
+
+      materialDesc: firstItem
+        ? `${firstItem.particulars} (${firstItem.uom})`
+        : '',
+
+      challanNo: inv.invoiceNo || '',
+      qtyInvoice: firstItem?.qty || 0,
+      qtyReceived: firstItem?.qty || 0,
+
       weighingSlip: 'N/A',
       materialOk: 'N/A',
       damageOk: 'N/A',
+
       mtcAvailable: 'N/A',
-      transporter: '',
-      lrNo: '',
-      approved: 'N/A',
+      transporter: inv.transport?.transporter || '',
+      lrNo: inv.transport?.lrNo || '',
+
       remarks: '',
       preparedBy: '',
       checkedBy: '',
       approvedBy: ''
     };
+
     this.showGRRModal = true;
   }
+
 
   closeGRRModal() {
     this.showGRRModal = false;
@@ -897,10 +1029,10 @@ export class InvoicesComponent implements OnInit {
       let logoLoaded = false;
       try {
         const logoBase64 = await this.loadLogoAsBase64('assets/Navbharat logo.png');
-        const logoW = 70;
+        const logoW = 150;
         const logoH = 30;
         const logoX = (pageWidth - logoW) / 2;
-        doc.addImage(logoBase64, 'PNG', logoX, 10, logoW, logoH);
+        doc.addImage(logoBase64, 'PNG', logoX, 0, logoW, logoH);
         logoLoaded = true;
       } catch (error) {
         console.warn('⚠️ Could not load logo for GRR, continuing without it');
@@ -972,7 +1104,7 @@ export class InvoicesComponent implements OnInit {
   =============================== */
   showMIRModal = false;
   selectedMIRItem: any = null;
-  mir: any = {
+  mirForm: any = {
     challanNo: '',
     customerName: '',
     quantity: '',
@@ -986,11 +1118,43 @@ export class InvoicesComponent implements OnInit {
     remarks: ''
   };
 
-  openMIRModal(item: any) {
-    this.selectedMIRItem = item;
-    this.mir.materialDesc = `${item.name} ${item.size} ${item.category}`;
+  openMIRModal(inv: any) {
+    this.selectedInvoiceItems = inv.items || [];
+    this.selectedItemIndex = null;
+    const firstItem = inv.items?.[0];
+
+    this.mirForm = {
+      customerName: inv.billTo?.name || '',
+      reportNo: `MIR-${inv.invoiceNo || ''}`,
+      date: new Date().toISOString().split('T')[0],
+
+      poNoDate: inv.orderRefNo || '',
+      dispatchedOn: inv.invoiceDate || '',
+
+      materialDesc: firstItem
+        ? `${firstItem.particulars} (${firstItem.uom})`
+        : '',
+
+      challanNo: inv.invoiceNo || '',
+      qtyInvoice: firstItem?.qty || 0,
+      batchNo: '',
+
+      materialVerified: 'N/A',
+      damageOk: 'N/A',
+
+      mtcAvailable: 'N/A',
+      transporter: inv.transport?.transporter || '',
+      lrNo: inv.transport?.lrNo || '',
+
+      remarks: '',
+      preparedBy: '',
+      checkedBy: '',
+      approvedBy: ''
+    };
+
     this.showMIRModal = true;
   }
+
 
   closeMIRModal() {
     this.showMIRModal = false;
@@ -998,44 +1162,80 @@ export class InvoicesComponent implements OnInit {
 
   async generateMIR() {
     try {
-      const doc = new jsPDF();
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 10;
+
+      const safe = (v: any) => (v == null ? '' : String(v));
+      const g = this.mirForm;
 
       // Try to load logo
+      let logoLoaded = false;
       try {
-        const logoBase64 = await this.loadLogoAsBase64('assets/LOGO.jpg');
-        doc.addImage(logoBase64, 'JPEG', 10, 8, 30, 15);
+        const logoBase64 = await this.loadLogoAsBase64('assets/Navbharat logo.png');
+        const logoW = 150;
+        const logoH = 30;
+        const logoX = (pageWidth - logoW) / 2;
+        doc.addImage(logoBase64, 'PNG', logoX, 0, logoW, logoH);
+        logoLoaded = true;
       } catch (error) {
         console.warn('⚠️ Could not load logo for MIR, continuing without it');
       }
 
-      doc.setFont('helvetica', 'bold');
+      const startY = logoLoaded ? 50 : 20;
+
       doc.setFontSize(12);
-      doc.text('Material Inspection Report (MIR)', 105, 18, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.text('MATERIALS INSPECTION REPORT (MIR)', pageWidth / 2, startY, { align: 'center' });
 
-      autoTable(doc, {
-        startY: 30,
-        head: [['Field', 'Details']],
-        body: [
-          ['Item', this.selectedMIRItem?.name || ''],
-          ['Size', this.selectedMIRItem?.size || ''],
-          ['Category', this.selectedMIRItem?.category || ''],
-          ['Challan No', this.mir.challanNo],
-          ['Customer Name', this.mir.customerName],
-          ['Quantity', this.mir.quantity],
-          ['Material Description', this.mir.materialDesc],
-          ['PO No', this.mir.poNo],
-          ['MIR Date', this.mir.dateOfMIR],
-          ['Dispatch Date', this.mir.dispatchDate],
-          ['Batch / Lot No', this.mir.batchLotNo],
-          ['Specification', this.mir.specification],
-          ['MTC Reviewed', this.mir.mtcReviewed],
-          ['Remarks', this.mir.remarks]
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220] },
-      });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
 
-      doc.save('MIR_Report.pdf');
+      let y = startY + 10;
+      doc.text(`Customer Name: ${safe(g.customerName)}`, margin, y);
+      doc.text(`Report No: ${safe(g.reportNo)}`, pageWidth / 2, y);
+
+      y += 7;
+      doc.text(`PO No & Date: ${safe(g.poNoDate)}`, margin, y);
+      doc.text(`Date: ${safe(g.date)}`, pageWidth / 2, y);
+
+      y += 10;
+      doc.text(`Material Dispatched On: ${safe(g.dispatchedOn)}`, margin, y);
+      y += 7;
+      doc.text(`Material Description: ${safe(g.materialDesc)}`, margin, y);
+      y += 7;
+      doc.text(`Challan No: ${safe(g.challanNo)}`, margin, y);
+      y += 7;
+      doc.text(`Qty (Invoice): ${safe(g.qtyInvoice)}`, margin, y);
+      y += 7;
+      doc.text(`Batch No: ${safe(g.batchNo)}`, margin, y);
+
+      // y += 10;
+      // doc.text(`Weighing Slip: ${safe(g.weighingSlip)}`, margin, y);
+      y += 7;
+      doc.text(`Material Verified as per order: ${safe(g.materialOk)}`, margin, y);
+      y += 7;
+      doc.text(`Damage Acceptable: ${safe(g.damageOk)}`, margin, y);
+
+      y += 10;
+      doc.text(`MTC Available: ${safe(g.mtcAvailable)}`, margin, y);
+      y += 7;
+      doc.text(`Transporter: ${safe(g.transporter)}`, margin, y);
+      y += 7;
+      doc.text(`LR No / Vehicle No: ${safe(g.lrNo)}`, margin, y);
+      y += 7;
+      doc.text(`Approved: ${safe(g.approved)}`, margin, y);
+
+      y += 10;
+      doc.text(`Remarks: ${safe(g.remarks)}`, margin, y);
+
+      y += 20;
+      doc.text(`Prepared By: ${safe(g.preparedBy)}`, margin, y);
+      doc.text(`Checked By: ${safe(g.checkedBy)}`, pageWidth / 2, y);
+      y += 10;
+      doc.text(`Approved By: ${safe(g.approvedBy)}`, margin, y);
+
+      doc.save(`MIR_${safe(g.reportNo) || 'Report'}.pdf`);
       this.closeMIRModal();
     } catch (error) {
       console.error('❌ Error generating MIR:', error);

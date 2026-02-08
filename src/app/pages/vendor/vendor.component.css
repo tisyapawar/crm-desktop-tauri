@@ -4,9 +4,10 @@
 
 /* Container */
 .vendors-container {
-  min-height: 100vh;
+  min-height: 100%;
+  padding: 24px;
+  overflow: hidden;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
-  padding: 40px;
   font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -846,4 +847,23 @@ select,
 textarea {
   box-sizing: border-box;
   max-width: 100%;
+}
+
+.doc-remove-btn {
+  display: inline-flex;
+  background-color: rgb(248, 67, 67);
+  align-items: center;
+  font-size: 11px;
+  color: #001F3F;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e0;
+  transition: all 0.2s ease;
+}
+
+.doc-remove-btn:hover {
+  background: rgb(184, 35, 35);
+  color: white;
+  border-color: #001F3F;
 }
