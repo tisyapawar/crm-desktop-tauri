@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "CRM Desktop Application (Tauri)",
-  "author": "Kashyap",
+  "author": "Tisya",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -50,4 +50,5 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.7.2"
   }
+
 }
